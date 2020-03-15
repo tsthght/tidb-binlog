@@ -138,6 +138,22 @@ func (e *executor) begin() (*Tx, error) {
 		queryHistogramVec: e.queryHistogramVec,
 	}
 
+	if e.info.SupportPlugin {
+		hook := e.info.Hooks[plugin.ExecutorExtend]
+		hook.Range(func(k, val interface{}) bool {
+			c, ok := val.(ExecutorExtend)
+			if !ok {
+				//ignore type incorrect error
+				return true
+			}
+			err = c.ExtendTxn(tx)
+			return e == nil
+		})
+		if err != nil {
+			log.Error("ExecutorExtend plugin failed")
+		}
+	}
+
 	if e.info != nil && e.info.LoopbackControl {
 		start := time.Now()
 
@@ -158,20 +174,6 @@ func (e *executor) begin() (*Tx, error) {
 	return tx, nil
 }
 
-func (e *executor) externPoint(t *Tx, dmls []*DML) (*Tx, []*DML) {
-	hook := e.info.Hooks[plugin.ExecutorExtend]
-	hook.Range(func(k, val interface{}) bool {
-		c, ok := val.(ExecutorExtend)
-		if !ok {
-			//ignore type incorrect error
-			return true
-		}
-		t, dmls = c.ExtendTxn(t, dmls, e.info)
-		return dmls != nil
-	})
-	return t, dmls
-}
-
 func (e *executor) bulkDelete(deletes []*DML) error {
 	if len(deletes) == 0 {
 		return nil
@@ -182,13 +184,6 @@ func (e *executor) bulkDelete(deletes []*DML) error {
 	tx, err := e.begin()
 	if err != nil {
 		return errors.Trace(err)
-	}
-
-	if e.info.SupportPlugin {
-		tx, deletes = e.externPoint(tx, deletes)
-		if len(deletes) == 0 {
-			return nil
-		}
 	}
 
 	argss := make([]interface{}, 0, len(deletes))
@@ -218,13 +213,6 @@ func (e *executor) bulkReplace(inserts []*DML) error {
 	tx, err := e.begin()
 	if err != nil {
 		return errors.Trace(err)
-	}
-
-	if e.info.SupportPlugin {
-		tx, inserts = e.externPoint(tx, inserts)
-		if len(inserts) == 0 {
-			return nil
-		}
 	}
 
 	info := inserts[0].info
@@ -376,13 +364,6 @@ func (e *executor) singleExec(dmls []*DML, safeMode bool) error {
 	tx, err := e.begin()
 	if err != nil {
 		return errors.Trace(err)
-	}
-
-	if e.info.SupportPlugin {
-		tx, dmls = e.externPoint(tx, dmls)
-		if len(dmls) == 0 {
-			return nil
-		}
 	}
 
 	for _, dml := range dmls {

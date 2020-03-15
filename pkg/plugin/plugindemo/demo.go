@@ -12,10 +12,10 @@ import (
 type PluginDemo struct{}
 
 //ExtendTxn is one of the Hook
-func (pd PluginDemo) ExtendTxn(tx *loader.Tx, dmls []*loader.DML, info *loopbacksync.LoopBackSync) (*loader.Tx, []*loader.DML) {
+func (pd PluginDemo) ExtendTxn(tx *loader.Tx) error {
 	//do sth
 	log.Info("i am ExtendTxn")
-	return tx, dmls
+	return nil
 }
 
 //FilterTxn is one of the Hook
