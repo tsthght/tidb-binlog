@@ -208,7 +208,8 @@ func getOBColsOfTbl(db *gosql.DB, table string) ([]string, error) {
 
 	cols := make([]string, 0, 1)
 	for rows.Next() {
-		var name, tp, nulable, def, extra, comment string
+		var name, tp, nulable, extra, comment string
+		var def []byte
 		var key int
 		err = rows.Scan(&name, &tp, &nulable, &key, &def, &extra, &comment)
 		if err != nil {
