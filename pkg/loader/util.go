@@ -37,6 +37,8 @@ SELECT non_unique, index_name, seq_in_index, column_name
 FROM information_schema.statistics
 WHERE table_schema = ? AND table_name = ?
 ORDER BY seq_in_index ASC;`
+	obColsSQL     = `show columns from ?;`
+	obUniqKeysSQL = `show index from ?`
 )
 
 type tableInfo struct {
@@ -56,14 +58,21 @@ type indexInfo struct {
 func getTableInfo(db *gosql.DB, schema string, table string) (info *tableInfo, err error) {
 	info = new(tableInfo)
 
-	if info.columns, err = getColsOfTbl(db, schema, table); err != nil {
-		return nil, errors.Annotatef(err, "table `%s`.`%s`", schema, table)
+	if len(schema) == 0 {
+		if info.columns, err = getOBColsOfTbl(db, table); err != nil {
+			return nil, errors.Annotatef(err, "table `%s`.`%s`", schema, table)
+		}
+		if info.uniqueKeys, err = getOBUniqKeys(db, table); err != nil {
+			return nil, errors.Trace(err)
+		}
+	} else {
+		if info.columns, err = getColsOfTbl(db, schema, table); err != nil {
+			return nil, errors.Annotatef(err, "table `%s`.`%s`", schema, table)
+		}
+		if info.uniqueKeys, err = getUniqKeys(db, schema, table); err != nil {
+			return nil, errors.Trace(err)
+		}
 	}
-
-	if info.uniqueKeys, err = getUniqKeys(db, schema, table); err != nil {
-		return nil, errors.Trace(err)
-	}
-
 	// put primary key at first place
 	// and set primaryKey
 	for i := 0; i < len(info.uniqueKeys); i++ {
@@ -188,6 +197,40 @@ func getColsOfTbl(db *gosql.DB, schema, table string) ([]string, error) {
 	return cols, nil
 }
 
+func getOBColsOfTbl(db *gosql.DB, table string) ([]string, error) {
+	rows, err := db.Query(obColsSQL, table)
+	if err != nil {
+		return nil, errors.Trace(err)
+	}
+	defer rows.Close()
+
+	cols := make([]string, 0, 1)
+	for rows.Next() {
+		var name, tp, nulable, def, extra, comment string
+		var key int
+		err = rows.Scan(&name, &tp, &nulable, &key, &def, &extra, &comment)
+		if err != nil {
+			return nil, errors.Trace(err)
+		}
+		isGenerated := strings.Contains(extra, "VIRTUAL GENERATED") || strings.Contains(extra, "STORED GENERATED")
+		if isGenerated {
+			continue
+		}
+		cols = append(cols, name)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, errors.Trace(err)
+	}
+
+	// if no any columns returns, means the table not exist.
+	if len(cols) == 0 {
+		return nil, ErrTableNotExist
+	}
+
+	return cols, nil
+}
+
 // https://dev.mysql.com/doc/mysql-infoschema-excerpt/5.7/en/statistics-table.html
 func getUniqKeys(db *gosql.DB, schema, table string) (uniqueKeys []indexInfo, err error) {
 	rows, err := db.Query(uniqKeysSQL, schema, table)
@@ -206,6 +249,52 @@ func getUniqKeys(db *gosql.DB, schema, table string) (uniqueKeys []indexInfo, er
 	// key for PRIMARY or other index name
 	for rows.Next() {
 		err = rows.Scan(&nonUnique, &keyName, &seqInIndex, &columnName)
+		if err != nil {
+			err = errors.Trace(err)
+			return
+		}
+
+		if nonUnique == 1 {
+			continue
+		}
+
+		var i int
+		// Search for indexInfo with the current keyName
+		for i = 0; i < len(uniqueKeys); i++ {
+			if uniqueKeys[i].name == keyName {
+				uniqueKeys[i].columns = append(uniqueKeys[i].columns, columnName)
+				break
+			}
+		}
+		// If we don't find the indexInfo with the loop above, create a new one
+		if i == len(uniqueKeys) {
+			uniqueKeys = append(uniqueKeys, indexInfo{keyName, []string{columnName}})
+		}
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, errors.Trace(err)
+	}
+
+	return
+}
+
+func getOBUniqKeys(db *gosql.DB, table string) (uniqueKeys []indexInfo, err error) {
+	rows, err := db.Query(obUniqKeysSQL, table)
+	if err != nil {
+		err = errors.Trace(err)
+		return
+	}
+	defer rows.Close()
+
+	var nonUnique, seqInIndex int
+	var tableName, keyName, columnName, collation, cardinality, subPart, packed, isNull, indexType, comment, indexComment, indexStatus string
+
+	// get pk and uk
+	// key for PRIMARY or other index name
+	for rows.Next() {
+		err = rows.Scan(&tableName, &nonUnique, &keyName, &seqInIndex, &columnName, &collation, &cardinality, subPart,
+			packed, isNull, indexType, comment, indexComment, indexStatus)
 		if err != nil {
 			err = errors.Trace(err)
 			return
