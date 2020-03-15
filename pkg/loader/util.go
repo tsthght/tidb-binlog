@@ -39,8 +39,6 @@ SELECT non_unique, index_name, seq_in_index, column_name
 FROM information_schema.statistics
 WHERE table_schema = ? AND table_name = ?
 ORDER BY seq_in_index ASC;`
-	obColsSQL     = `show columns from ?;`
-	obUniqKeysSQL = `show index from ?`
 )
 
 type tableInfo struct {
@@ -200,7 +198,8 @@ func getColsOfTbl(db *gosql.DB, schema, table string) ([]string, error) {
 }
 
 func getOBColsOfTbl(db *gosql.DB, table string) ([]string, error) {
-	rows, err := db.Query(obColsSQL, table)
+	obColsSQL := fmt.Sprintf("show columns from %s ;", table)
+	rows, err := db.Query(obColsSQL)
 	if err != nil {
 		log.Warn("db query failed", zap.String("error", err.Error()))
 		return nil, errors.Trace(err)
@@ -286,7 +285,8 @@ func getUniqKeys(db *gosql.DB, schema, table string) (uniqueKeys []indexInfo, er
 }
 
 func getOBUniqKeys(db *gosql.DB, table string) (uniqueKeys []indexInfo, err error) {
-	rows, err := db.Query(obUniqKeysSQL, table)
+	obUniqKeysSQL := fmt.Sprintf("show index from %s ;", table)
+	rows, err := db.Query(obUniqKeysSQL)
 	if err != nil {
 		err = errors.Trace(err)
 		return
