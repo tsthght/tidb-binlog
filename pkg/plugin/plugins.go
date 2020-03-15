@@ -14,6 +14,8 @@ const (
 	SyncerFilter Kind = iota
 	//ExecutorExtend is one kind of Plugin for loader
 	ExecutorExtend
+	//LoaderExtend is one kind of Plugin for loader
+	LoaderExtend
 	//LoaderInit is one kind of Plugin for loader
 	LoaderInit
 	//LoaderDestroy is one kind of Plugin for loader

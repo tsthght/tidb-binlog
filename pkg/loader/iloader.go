@@ -11,6 +11,11 @@ type ExecutorExtend interface {
 	ExtendTxn(tx *Tx, dmls []*DML, info *loopbacksync.LoopBackSync) (*Tx, []*DML)
 }
 
+// LoaderExtend is the interface for loader plugin
+type LoaderExtend interface {
+	FilterTxn(tx *Txn, info *loopbacksync.LoopBackSync) *Txn
+}
+
 // Init is the interface for loader plugin
 type Init interface {
 	LoaderInit(db *gosql.DB, info *loopbacksync.LoopBackSync) error

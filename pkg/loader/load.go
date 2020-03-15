@@ -235,6 +235,15 @@ func NewLoader(db *gosql.DB, opt ...Option) (Loader, error) {
 				log.Info("Load plugin success.", zap.String("plugin name", n), zap.String("interface", "ExecutorExtend"))
 			}
 
+			_, ok = plg.(LoaderExtend)
+			if !ok {
+				log.Info("LoaderExtend interface is not implemented.", zap.String("plugin name", n))
+			} else {
+				plugin.RegisterPlugin(s.loopBackSyncInfo.Hooks[plugin.LoaderExtend],
+					n, plg)
+				log.Info("Load plugin success.", zap.String("plugin name", n), zap.String("interface", "LoaderExtend"))
+			}
+
 			_, ok = plg.(Init)
 			if !ok {
 				log.Info("LoaderInit interface is not implemented.", zap.String("plugin name", n))
@@ -611,6 +620,17 @@ func (s *loaderImpl) Run() error {
 
 			s.metricsInputTxn(txn)
 			txnManager.pop(txn)
+			if s.loopBackSyncInfo.SupportPlugin {
+				hook := s.loopBackSyncInfo.Hooks[plugin.LoaderExtend]
+				hook.Range(func(k, val interface{}) bool {
+					c, ok := val.(LoaderExtend)
+					if !ok {
+						return true
+					}
+					txn = c.FilterTxn(txn, s.loopBackSyncInfo)
+					return txn != nil
+				})
+			}
 			if err := batch.put(txn); err != nil {
 				return errors.Trace(err)
 			}
@@ -633,6 +653,17 @@ func (s *loaderImpl) Run() error {
 
 			s.metricsInputTxn(txn)
 			txnManager.pop(txn)
+			if s.loopBackSyncInfo.SupportPlugin {
+				hook := s.loopBackSyncInfo.Hooks[plugin.LoaderExtend]
+				hook.Range(func(k, val interface{}) bool {
+					c, ok := val.(LoaderExtend)
+					if !ok {
+						return true
+					}
+					txn = c.FilterTxn(txn, s.loopBackSyncInfo)
+					return txn != nil
+				})
+			}
 			if err := batch.put(txn); err != nil {
 				return errors.Trace(err)
 			}
