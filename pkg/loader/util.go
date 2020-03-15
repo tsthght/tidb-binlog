@@ -21,6 +21,8 @@ import (
 	"strings"
 
 	"github.com/pingcap/errors"
+	"github.com/pingcap/log"
+	"go.uber.org/zap"
 )
 
 var (
@@ -60,7 +62,7 @@ func getTableInfo(db *gosql.DB, schema string, table string) (info *tableInfo, e
 
 	if len(schema) == 0 {
 		if info.columns, err = getOBColsOfTbl(db, table); err != nil {
-			return nil, errors.Annotatef(err, "table `%s`.`%s`", schema, table)
+			return nil, errors.Annotatef(err, "table `%s`", table)
 		}
 		if info.uniqueKeys, err = getOBUniqKeys(db, table); err != nil {
 			return nil, errors.Trace(err)
@@ -200,6 +202,7 @@ func getColsOfTbl(db *gosql.DB, schema, table string) ([]string, error) {
 func getOBColsOfTbl(db *gosql.DB, table string) ([]string, error) {
 	rows, err := db.Query(obColsSQL, table)
 	if err != nil {
+		log.Warn("db query failed", zap.String("error", err.Error()))
 		return nil, errors.Trace(err)
 	}
 	defer rows.Close()
@@ -210,6 +213,7 @@ func getOBColsOfTbl(db *gosql.DB, table string) ([]string, error) {
 		var key int
 		err = rows.Scan(&name, &tp, &nulable, &key, &def, &extra, &comment)
 		if err != nil {
+			log.Warn("rows scan failed", zap.String("error", err.Error()))
 			return nil, errors.Trace(err)
 		}
 		isGenerated := strings.Contains(extra, "VIRTUAL GENERATED") || strings.Contains(extra, "STORED GENERATED")
@@ -220,11 +224,13 @@ func getOBColsOfTbl(db *gosql.DB, table string) ([]string, error) {
 	}
 
 	if err = rows.Err(); err != nil {
+		log.Warn("get rows failed", zap.String("error", err.Error()))
 		return nil, errors.Trace(err)
 	}
 
 	// if no any columns returns, means the table not exist.
 	if len(cols) == 0 {
+		log.Warn("no any column returns")
 		return nil, ErrTableNotExist
 	}
 
