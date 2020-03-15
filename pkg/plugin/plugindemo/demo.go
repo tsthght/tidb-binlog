@@ -15,7 +15,7 @@ type PluginDemo struct{}
 func (pd PluginDemo) ExtendTxn(tx *loader.Tx, dmls []*loader.DML, info *loopbacksync.LoopBackSync) (*loader.Tx, []*loader.DML) {
 	//do sth
 	log.Info("i am ExtendTxn")
-	return nil, nil
+	return tx, dmls
 }
 
 //FilterTxn is one of the Hook
