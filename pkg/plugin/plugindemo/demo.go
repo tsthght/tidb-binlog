@@ -82,7 +82,7 @@ func createMarkTable(db *sql.DB, markTableName string) error {
 func initMarkTableData(db *sql.DB, info *loopbacksync.LoopBackSync) error {
 	var builder strings.Builder
 	holder := "(?,?,?)"
-	columns := fmt.Sprintf("(%s,%s) ", ID, Val)
+	columns := fmt.Sprintf("(%s,%s,%s) ", ID, Channel_ID, Val)
 	builder.WriteString("REPLACE INTO " + info.MarkTableName + columns + " VALUES ")
 	for i := 0; i < 512; i++ {
 		if i > 0 {
