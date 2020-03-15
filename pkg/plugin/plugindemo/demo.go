@@ -67,7 +67,7 @@ func createMarkTable(db *sql.DB, markTableName string) error {
 		"CREATE TABLE If Not Exists %s (" +
 			"%s bigint not null PRIMARY KEY," +
 			"%s bigint not null DEFAULT 0 ;",
-		markTableName, ID,Val,ID)
+		markTableName, ID,Val)
 	_, err := db.Exec(sql)
 	if err != nil {
 		return errors.Annotate(err, "failed to create mark table")
