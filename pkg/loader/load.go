@@ -339,6 +339,7 @@ func (s *loaderImpl) refreshTableInfo(schema string, table string) (info *tableI
 
 	info, err = utilGetTableInfo(s.db, schema, table)
 	if err != nil {
+		log.Warn("get table info failed", zap.String("error", err.Error()))
 		return info, errors.Trace(err)
 	}
 
