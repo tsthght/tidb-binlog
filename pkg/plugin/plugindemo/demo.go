@@ -18,6 +18,8 @@ const (
 	ID = "id"
 	// Val field in mark table
 	Val = "val"
+	// Channel_ID field in mark table
+	Channel_ID = "Channel_ID"
 )
 
 //PluginDemo is a demo struct
@@ -66,8 +68,9 @@ func createMarkTable(db *sql.DB, markTableName string) error {
 	sql := fmt.Sprintf(
 		"CREATE TABLE If Not Exists %s (" +
 			"%s bigint not null PRIMARY KEY," +
-			"%s bigint not null DEFAULT 0);",
-		markTableName, ID,Val)
+			"%s bigint not null DEFAULT 0," +
+			"%s bigint DEFAULT 0);",
+		markTableName, ID, Channel_ID, Val)
 	_, err := db.Exec(sql)
 	if err != nil {
 		return errors.Annotate(err, "failed to create mark table")
@@ -90,7 +93,7 @@ func initMarkTableData(db *sql.DB, info *loopbacksync.LoopBackSync) error {
 
 	var args []interface{}
 	for id := 0; id < 512; id++ {
-		args = append(args, id, info.ChannelID, 1 /* value */, "" /*channel_info*/)
+		args = append(args, id, info.ChannelID, 1 /* value */)
 	}
 
 	query := builder.String()
