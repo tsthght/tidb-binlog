@@ -69,7 +69,6 @@ func NewLoopBackSyncInfo(ChannelID int64, LoopbackControl, SyncDDL bool, path st
 	if l.SupportPlugin {
 		l.Hooks = make([]*plugin.EventHooks, 4)
 		l.Hooks[plugin.SyncerFilter] = &plugin.EventHooks{}
-
 		l.Hooks[plugin.ExecutorExtend] = &plugin.EventHooks{}
 		l.Hooks[plugin.LoaderInit] = &plugin.EventHooks{}
 		l.Hooks[plugin.LoaderDestroy] = &plugin.EventHooks{}

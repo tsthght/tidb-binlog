@@ -20,7 +20,6 @@ import (
 	"os"
 	"path"
 	"sort"
-	"strings"
 	"sync"
 
 	"github.com/Shopify/sarama"
@@ -192,19 +191,3 @@ func genDrainerID(listenAddr string) (string, error) {
 
 	return fmt.Sprintf("%s:%s", hostname, port), nil
 }
-
-type sliceNames []string
-
-func newSliceNames(vals []string, p *[]string) *sliceNames {
-	*p = vals
-	return (*sliceNames)(p)
-}
-
-func (s *sliceNames) Set(val string) error {
-	*s = sliceNames(strings.Split(val, ","))
-	return nil
-}
-
-func (s *sliceNames) Get() interface{} { return []string(*s) }
-
-func (s *sliceNames) String() string { return strings.Join([]string(*s), ",") }
