@@ -65,9 +65,8 @@ func NewPlugin() interface{} {
 func createMarkTable(db *sql.DB, markTableName string) error {
 	sql := fmt.Sprintf(
 		"CREATE TABLE If Not Exists %s (" +
-			"%s bigint not null," +
-			"%s bigint not null DEFAULT 0, " +
-			"PRIMARY KEY %s);",
+			"%s bigint not null PRIMARY KEY," +
+			"%s bigint not null DEFAULT 0 ;",
 		markTableName, ID,Val,ID)
 	_, err := db.Exec(sql)
 	if err != nil {
