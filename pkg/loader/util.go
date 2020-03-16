@@ -294,12 +294,13 @@ func getOBUniqKeys(db *gosql.DB, table string) (uniqueKeys []indexInfo, err erro
 	}
 	defer rows.Close()
 
-	uniqueKeys[0].name = "primary"
+	uniqueKeys[0].name = "PRIMARY"
 	for rows.Next() {
 		var name, tp, nulable, extra, comment string
 		var def []byte
 		var key int
 		err = rows.Scan(&name, &tp, &nulable, &key, &def, &extra, &comment)
+		log.Info("get uk", zap.String("name", name))
 		if err != nil {
 			log.Warn("rows scan failed", zap.String("error", err.Error()))
 			return nil, errors.Trace(err)
