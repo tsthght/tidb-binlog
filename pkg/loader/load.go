@@ -628,11 +628,14 @@ func (s *loaderImpl) Run() error {
 					if !ok {
 						return true
 					}
-					txn = c.FilterTxn(txn, s.loopBackSyncInfo)
-					return txn != nil
+					txn, err = c.FilterTxn(txn, s.loopBackSyncInfo)
+					return txn != nil && err == nil
 				})
 				if txn == nil {
 					continue
+				}
+				if err != nil {
+					return errors.Trace(err)
 				}
 			}
 			if err := batch.put(txn); err != nil {
@@ -664,11 +667,14 @@ func (s *loaderImpl) Run() error {
 					if !ok {
 						return true
 					}
-					txn = c.FilterTxn(txn, s.loopBackSyncInfo)
-					return txn != nil
+					txn, err = c.FilterTxn(txn, s.loopBackSyncInfo)
+					return txn != nil && err == nil
 				})
 				if txn == nil {
 					continue
+				}
+				if err != nil {
+					return errors.Trace(err)
 				}
 			}
 			if err := batch.put(txn); err != nil {

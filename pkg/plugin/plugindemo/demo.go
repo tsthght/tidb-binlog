@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	gosql "database/sql"
+	"reflect"
 	"strings"
 	"database/sql"
 
@@ -33,15 +34,27 @@ func (pd PluginDemo) ExtendTxn(tx *loader.Tx) error {
 }
 
 //FilterTxn is one of the Hook
-func (pd PluginDemo) FilterTxn(tx *loader.Txn, info *loopbacksync.LoopBackSync) *loader.Txn {
+func (pd PluginDemo) FilterTxn(tx *loader.Txn, info *loopbacksync.LoopBackSync) (*loader.Txn, error) {
 	log.Info("i am FilterTxn")
 	if tx.DDL != nil {
-		return nil
+		return nil, nil
 	}
 	for _, v := range tx.DMLs {
 		v.Database = ""
 	}
-	return tx
+	/* if loopback mark exists */
+	find,err := findLoopBackMark(tx.DMLs,info)
+	if err!= nil{
+		log.Error("analyze transaction failed", zap.Error(err))
+		return tx, err
+	}
+
+	if find{
+		log.Warn("find loopback mark, no need to handle transaction")
+		return tx, nil
+	}
+
+	return tx, nil
 }
 
 func (pd PluginDemo) LoaderInit(db *gosql.DB, info *loopbacksync.LoopBackSync) error {
@@ -103,6 +116,25 @@ func initMarkTableData(db *sql.DB, info *loopbacksync.LoopBackSync) error {
 	}
 
 	return nil
+}
+
+func findLoopBackMark(dmls []*loader.DML, info *loopbacksync.LoopBackSync) (bool, error) {
+	for _, dml := range dmls {
+		if strings.EqualFold(dml.Database, info.MarkDBName) &&
+			strings.EqualFold(dml.Table, info.MarkTableName) {
+			channelID, ok := dml.Values[loopbacksync.ChannelID]
+			if ok {
+				channelIDInt64, ok := channelID.(int64)
+				if !ok {
+					return false, errors.Errorf("wrong type of channelID: %s", reflect.TypeOf(channelID))
+				}
+				if channelIDInt64 == info.ChannelID {
+					return true, nil
+				}
+			}
+		}
+	}
+	return false, nil
 }
 
 var _ PluginDemo

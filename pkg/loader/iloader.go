@@ -13,7 +13,7 @@ type ExecutorExtend interface {
 
 // LoaderExtend is the interface for loader plugin
 type LoaderExtend interface {
-	FilterTxn(tx *Txn, info *loopbacksync.LoopBackSync) *Txn
+	FilterTxn(tx *Txn, info *loopbacksync.LoopBackSync) (*Txn, error)
 }
 
 // Init is the interface for loader plugin
