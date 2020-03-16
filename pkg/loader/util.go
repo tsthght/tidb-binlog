@@ -59,11 +59,9 @@ func getTableInfo(db *gosql.DB, schema string, table string) (info *tableInfo, e
 	info = new(tableInfo)
 
 	if len(schema) == 0 {
-		log.Info("getOBColsOfTbl")
 		if info.columns, err = getOBColsOfTbl(db, table); err != nil {
 			return nil, errors.Annotatef(err, "table `%s`", table)
 		}
-		log.Info("getOBUniqKeys")
 		if info.uniqueKeys, err = getOBUniqKeys(db, table); err != nil {
 			return nil, errors.Trace(err)
 		}
@@ -288,12 +286,15 @@ func getUniqKeys(db *gosql.DB, schema, table string) (uniqueKeys []indexInfo, er
 }
 
 func getOBUniqKeys(db *gosql.DB, table string) (uniqueKeys []indexInfo, err error) {
+	log.Info("getOBUniqKeys: start")
 	obColsSQL := fmt.Sprintf("show columns from %s ;", table)
 	rows, err := db.Query(obColsSQL)
 	if err != nil {
 		log.Warn("db query failed", zap.String("error", err.Error()))
 		return nil, errors.Trace(err)
 	}
+	log.Info("getOBUniqKeys: query")
+
 	defer rows.Close()
 
 	uniqueKeys[0].name = "PRIMARY"
