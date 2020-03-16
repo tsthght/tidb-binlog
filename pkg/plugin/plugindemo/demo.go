@@ -122,7 +122,7 @@ func findLoopBackMark(dmls []*loader.DML, info *loopbacksync.LoopBackSync) (bool
 	for _, dml := range dmls {
 		log.Info("findLoopBackMark", zap.String("dbname", dml.Database),
 			zap.String("tbname", dml.Table))
-		if strings.EqualFold(dml.Database, info.MarkDBName) &&
+		if strings.EqualFold(dml.Database, "") &&
 			strings.EqualFold(dml.Table, info.MarkTableName) {
 			channelID, ok := dml.Values[loopbacksync.ChannelID]
 			if ok {
