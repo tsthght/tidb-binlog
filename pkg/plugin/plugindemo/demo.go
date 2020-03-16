@@ -51,7 +51,7 @@ func (pd PluginDemo) FilterTxn(tx *loader.Txn, info *loopbacksync.LoopBackSync) 
 
 	if find{
 		log.Warn("find loopback mark, no need to handle transaction")
-		return tx, nil
+		return nil, nil
 	}
 
 	return tx, nil
@@ -120,6 +120,8 @@ func initMarkTableData(db *sql.DB, info *loopbacksync.LoopBackSync) error {
 
 func findLoopBackMark(dmls []*loader.DML, info *loopbacksync.LoopBackSync) (bool, error) {
 	for _, dml := range dmls {
+		log.Info("findLoopBackMark", zap.String("dbname", dml.Database),
+			zap.String("tbname", dml.Table))
 		if strings.EqualFold(dml.Database, info.MarkDBName) &&
 			strings.EqualFold(dml.Table, info.MarkTableName) {
 			channelID, ok := dml.Values[loopbacksync.ChannelID]
