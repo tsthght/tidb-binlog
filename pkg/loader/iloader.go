@@ -8,7 +8,7 @@ import (
 
 // ExecutorExtend is the interface for loader plugin
 type ExecutorExtend interface {
-	ExtendTxn(tx *Tx) error
+	ExtendTxn(tx *Tx, info *loopbacksync.LoopBackSync) error
 }
 
 // LoaderExtend is the interface for loader plugin

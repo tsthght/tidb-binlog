@@ -138,22 +138,6 @@ func (e *executor) begin() (*Tx, error) {
 		queryHistogramVec: e.queryHistogramVec,
 	}
 
-	if e.info.SupportPlugin {
-		hook := e.info.Hooks[plugin.ExecutorExtend]
-		hook.Range(func(k, val interface{}) bool {
-			c, ok := val.(ExecutorExtend)
-			if !ok {
-				//ignore type incorrect error
-				return true
-			}
-			err = c.ExtendTxn(tx)
-			return e == nil
-		})
-		if err != nil {
-			log.Error("ExecutorExtend plugin failed")
-		}
-	}
-
 	if e.info != nil && e.info.LoopbackControl {
 		start := time.Now()
 
@@ -186,6 +170,22 @@ func (e *executor) bulkDelete(deletes []*DML) error {
 		return errors.Trace(err)
 	}
 
+	if e.info.SupportPlugin {
+		hook := e.info.Hooks[plugin.ExecutorExtend]
+		hook.Range(func(k, val interface{}) bool {
+			c, ok := val.(ExecutorExtend)
+			if !ok {
+				//ignore type incorrect error
+				return true
+			}
+			err = c.ExtendTxn(tx, e.info)
+			return err == nil
+		})
+		if err != nil {
+			log.Error("ExecutorExtend plugin failed")
+		}
+	}
+
 	argss := make([]interface{}, 0, len(deletes))
 
 	for _, dml := range deletes {
@@ -213,6 +213,22 @@ func (e *executor) bulkReplace(inserts []*DML) error {
 	tx, err := e.begin()
 	if err != nil {
 		return errors.Trace(err)
+	}
+
+	if e.info.SupportPlugin {
+		hook := e.info.Hooks[plugin.ExecutorExtend]
+		hook.Range(func(k, val interface{}) bool {
+			c, ok := val.(ExecutorExtend)
+			if !ok {
+				//ignore type incorrect error
+				return true
+			}
+			err = c.ExtendTxn(tx, e.info)
+			return err == nil
+		})
+		if err != nil {
+			log.Error("ExecutorExtend plugin failed")
+		}
 	}
 
 	info := inserts[0].info
@@ -364,6 +380,22 @@ func (e *executor) singleExec(dmls []*DML, safeMode bool) error {
 	tx, err := e.begin()
 	if err != nil {
 		return errors.Trace(err)
+	}
+
+	if e.info.SupportPlugin {
+		hook := e.info.Hooks[plugin.ExecutorExtend]
+		hook.Range(func(k, val interface{}) bool {
+			c, ok := val.(ExecutorExtend)
+			if !ok {
+				//ignore type incorrect error
+				return true
+			}
+			err = c.ExtendTxn(tx, e.info)
+			return err == nil
+		})
+		if err != nil {
+			log.Error("ExecutorExtend plugin failed")
+		}
 	}
 
 	for _, dml := range dmls {
