@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"strings"
 	"database/sql"
+	"sync/atomic"
 
 	"github.com/pingcap/errors"
 	"github.com/pingcap/log"
@@ -27,9 +28,23 @@ const (
 type PluginDemo struct{}
 
 //ExtendTxn is one of the Hook
-func (pd PluginDemo) ExtendTxn(tx *loader.Tx) error {
+func (pd PluginDemo) ExtendTxn(tx *loader.Tx, info *loopbacksync.LoopBackSync) error {
 	//do sth
 	log.Info("i am ExtendTxn")
+	if tx == nil || info == nil {
+		return nil
+	}
+	/* update mark table to avoid loopback sync */
+	sql := fmt.Sprintf("update %s set %s=%s+1 where %s=? limit 1;", info.MarkTableName, Val, ID, ID)
+	_, err := tx.Exec(sql, addIndex(info))
+	if err != nil {
+		rerr := tx.Rollback()
+		if rerr != nil {
+			log.Error("fail to rollback", zap.Error(rerr))
+		}
+		log.Error("fail to update mark", zap.Error(err))
+		return rerr
+	}
 	return nil
 }
 
@@ -137,6 +152,10 @@ func findLoopBackMark(dmls []*loader.DML, info *loopbacksync.LoopBackSync) (bool
 		}
 	}
 	return false, nil
+}
+
+func addIndex(info *loopbacksync.LoopBackSync) int64 {
+	return atomic.AddInt64(&info.Index, 1) % ((int64)(info.RecordID))
 }
 
 var _ PluginDemo
