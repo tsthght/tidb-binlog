@@ -286,24 +286,20 @@ func getUniqKeys(db *gosql.DB, schema, table string) (uniqueKeys []indexInfo, er
 }
 
 func getOBUniqKeys(db *gosql.DB, table string) (uniqueKeys []indexInfo, err error) {
-	log.Info("getOBUniqKeys: start")
-	obColsSQL := fmt.Sprintf("show columns from %s ;", table)
-	rows, err := db.Query(obColsSQL)
+	obUniqueSQL := fmt.Sprintf("show columns from %s ;", table)
+	rows, err := db.Query(obUniqueSQL)
 	if err != nil {
 		log.Warn("db query failed", zap.String("error", err.Error()))
 		return nil, errors.Trace(err)
 	}
-	log.Info("getOBUniqKeys: query")
-
 	defer rows.Close()
 
-	uniqueKeys[0].name = "PRIMARY"
+	uniqueKeys = append(uniqueKeys, indexInfo{"PRIMARY", []string{}})
 	for rows.Next() {
 		var name, tp, nulable, extra, comment string
 		var def []byte
 		var key int
 		err = rows.Scan(&name, &tp, &nulable, &key, &def, &extra, &comment)
-		log.Info("get uk", zap.String("name", name))
 		if err != nil {
 			log.Warn("rows scan failed", zap.String("error", err.Error()))
 			return nil, errors.Trace(err)
@@ -316,6 +312,7 @@ func getOBUniqKeys(db *gosql.DB, table string) (uniqueKeys []indexInfo, err erro
 	}
 
 	if err = rows.Err(); err != nil {
+		log.Warn("get rows failed", zap.String("error", err.Error()))
 		return nil, errors.Trace(err)
 	}
 	return
