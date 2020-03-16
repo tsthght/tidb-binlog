@@ -286,48 +286,31 @@ func getUniqKeys(db *gosql.DB, schema, table string) (uniqueKeys []indexInfo, er
 }
 
 func getOBUniqKeys(db *gosql.DB, table string) (uniqueKeys []indexInfo, err error) {
-	obUniqKeysSQL := fmt.Sprintf("show index from %s ;", table)
-	rows, err := db.Query(obUniqKeysSQL)
+	obColsSQL := fmt.Sprintf("show columns from %s ;", table)
+	rows, err := db.Query(obColsSQL)
 	if err != nil {
-		err = errors.Trace(err)
-		return
+		log.Warn("db query failed", zap.String("error", err.Error()))
+		return nil, errors.Trace(err)
 	}
 	defer rows.Close()
 
-	var nonUnique, seqInIndex int
-	var tableName, keyName, columnName, collation, cardinality, subPart, packed, isNull, indexType, comment, indexComment, indexStatus string
-
-	// get pk and uk
-	// key for PRIMARY or other index name
+	uniqueKeys[0].name = "primary"
 	for rows.Next() {
-		err = rows.Scan(&tableName, &nonUnique, &keyName, &seqInIndex, &columnName, &collation, &cardinality, subPart,
-			packed, isNull, indexType, comment, indexComment, indexStatus)
+		var name, tp, nulable, extra, comment string
+		var def []byte
+		var key int
+		err = rows.Scan(&name, &tp, &nulable, &key, &def, &extra, &comment)
 		if err != nil {
-			err = errors.Trace(err)
-			return
+			log.Warn("rows scan failed", zap.String("error", err.Error()))
+			return nil, errors.Trace(err)
 		}
-
-		if nonUnique == 1 {
-			continue
-		}
-
-		var i int
-		// Search for indexInfo with the current keyName
-		for i = 0; i < len(uniqueKeys); i++ {
-			if uniqueKeys[i].name == keyName {
-				uniqueKeys[i].columns = append(uniqueKeys[i].columns, columnName)
-				break
-			}
-		}
-		// If we don't find the indexInfo with the loop above, create a new one
-		if i == len(uniqueKeys) {
-			uniqueKeys = append(uniqueKeys, indexInfo{keyName, []string{columnName}})
+		if key != 0 {
+			uniqueKeys[0].columns = append(uniqueKeys[0].columns, name)
 		}
 	}
 
 	if err = rows.Err(); err != nil {
 		return nil, errors.Trace(err)
 	}
-
 	return
 }
