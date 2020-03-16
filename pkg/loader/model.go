@@ -175,7 +175,8 @@ func (dml *DML) updateSQL() (sql string, args []interface{}) {
 			builder.WriteByte(',')
 		}
 		arg := dml.Values[name]
-		fmt.Fprintf(builder, "%s = ?", quoteName(name))
+		//fmt.Fprintf(builder, "%s = ?", quoteName(name))
+		fmt.Fprintf(builder, "%s = ?", name)
 		args = append(args, arg)
 	}
 
