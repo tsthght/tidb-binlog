@@ -19,7 +19,7 @@ const (
 	// Val field in mark table
 	Val = "val"
 	// Channel_ID field in mark table
-	Channel_ID = "Channel_ID"
+	Channel_ID = "channel_id"
 )
 
 //PluginDemo is a demo struct
