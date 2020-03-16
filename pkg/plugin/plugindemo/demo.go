@@ -97,7 +97,7 @@ func initMarkTableData(db *sql.DB, info *loopbacksync.LoopBackSync) error {
 	holder := "(?,?,?)"
 	columns := fmt.Sprintf("(%s,%s,%s) ", ID, Channel_ID, Val)
 	builder.WriteString("REPLACE INTO " + info.MarkTableName + columns + " VALUES ")
-	for i := 0; i < 512; i++ {
+	for i := 0; i < info.RecordID; i++ {
 		if i > 0 {
 			builder.WriteByte(',')
 		}
@@ -105,7 +105,7 @@ func initMarkTableData(db *sql.DB, info *loopbacksync.LoopBackSync) error {
 	}
 
 	var args []interface{}
-	for id := 0; id < 512; id++ {
+	for id := 0; id < info.RecordID; id++ {
 		args = append(args, id, info.ChannelID, 1 /* value */)
 	}
 
