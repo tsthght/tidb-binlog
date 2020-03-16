@@ -59,9 +59,11 @@ func getTableInfo(db *gosql.DB, schema string, table string) (info *tableInfo, e
 	info = new(tableInfo)
 
 	if len(schema) == 0 {
+		log.Info("getOBColsOfTbl")
 		if info.columns, err = getOBColsOfTbl(db, table); err != nil {
 			return nil, errors.Annotatef(err, "table `%s`", table)
 		}
+		log.Info("getOBUniqKeys")
 		if info.uniqueKeys, err = getOBUniqKeys(db, table); err != nil {
 			return nil, errors.Trace(err)
 		}
