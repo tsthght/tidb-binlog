@@ -305,7 +305,11 @@ func getOBUniqKeys(db *gosql.DB, table string) (uniqueKeys []indexInfo, err erro
 			return nil, errors.Trace(err)
 		}
 		if key != 0 {
-			uniqueKeys[0].columns = append(uniqueKeys[0].columns, name)
+			if len(uniqueKeys) == 0 {
+				uniqueKeys = append(uniqueKeys, indexInfo{"PRIMARY", []string{name}})
+			} else {
+				uniqueKeys[0].columns = append(uniqueKeys[0].columns, name)
+			}
 		} else {
 			break
 		}
