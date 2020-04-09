@@ -115,7 +115,7 @@ func (tx *Tx) autoRollbackExec(query string, args ...interface{}) (res gosql.Res
 		}
 		log.Warn("#####", zap.String("value", fmt.Sprintf("%v, %T", v, v)))
 	}
-	res, err = tx.exec(query, args...)
+	res, err = tx.exec(query, ar...)
 	if err != nil {
 		log.Error("exec fail", zap.String("query", query), zap.Reflect("args", args), zap.Error(err))
 		tx.Rollback()
