@@ -109,7 +109,7 @@ func (tx *Tx) autoRollbackExec(query string, args ...interface{}) (res gosql.Res
 	var ar []interface{}
 	for _, v := range args {
 		if str, ok := v.([]uint8); ok {
-			ar = append(ar, str)
+			ar = append(ar, string(str))
 		} else {
 			ar = append(ar, v)
 		}
