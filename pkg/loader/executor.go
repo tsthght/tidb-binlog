@@ -108,12 +108,11 @@ func (tx *Tx) exec(query string, args ...interface{}) (gosql.Result, error) {
 func (tx *Tx) autoRollbackExec(query string, args ...interface{}) (res gosql.Result, err error) {
 	var ar []interface{}
 	for _, v := range args {
-		if strings.EqualFold(fmt.Sprintf("%T", v), "[]uint8") {
-			ar = append(ar, "abcdef")
+		if str, ok := v.([]uint8); ok {
+			ar = append(ar, str)
 		} else {
 			ar = append(ar, v)
 		}
-		log.Warn("#####", zap.String("value", fmt.Sprintf("%v, %T", v, v)))
 	}
 	res, err = tx.exec(query, ar...)
 	if err != nil {
