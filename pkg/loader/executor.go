@@ -106,6 +106,9 @@ func (tx *Tx) exec(query string, args ...interface{}) (gosql.Result, error) {
 }
 
 func (tx *Tx) autoRollbackExec(query string, args ...interface{}) (res gosql.Result, err error) {
+	for _, v := range args {
+		log.Warn("#####", zap.String("value", fmt.Sprintf("%v, %T", v, v)))
+	}
 	res, err = tx.exec(query, args...)
 	if err != nil {
 		log.Error("exec fail", zap.String("query", query), zap.Reflect("args", args), zap.Error(err))
@@ -250,7 +253,6 @@ func (e *executor) bulkReplace(inserts []*DML) error {
 	for _, insert := range inserts {
 		for _, name := range info.columns {
 			v := insert.Values[name]
-			log.Warn("######", zap.String("arg", fmt.Sprintf("%v", v)))
 			args = append(args, v)
 		}
 	}
