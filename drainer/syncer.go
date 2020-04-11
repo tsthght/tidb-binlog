@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/pingcap/tidb-binlog/drainer/loopbacksync"
+	"github.com/pingcap/tidb-binlog/drainer/syncplg"
 	"github.com/pingcap/tidb-binlog/pkg/loader"
 
 	"github.com/pingcap/errors"
