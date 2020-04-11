@@ -27,9 +27,7 @@ type NewSyncerFunc func(
 	sqlMode *string,
 	destDBType string,
 	relayer relay.Relayer,
-	info *loopbacksync.LoopBackSync,
-	enableDispatch bool,
-	enableCausility bool) (dsyncer sync.Syncer, err error)
+	info *loopbacksync.LoopBackSync) (dsyncer sync.Syncer, err error)
 
 //LoadPlugin load syncer plugin
 func LoadPlugin(path, name string) (NewSyncerFunc, error) {
@@ -52,9 +50,7 @@ func LoadPlugin(path, name string) (NewSyncerFunc, error) {
 		sqlMode *string,
 		destDBType string,
 		relayer relay.Relayer,
-		info *loopbacksync.LoopBackSync,
-		enableDispatch bool,
-		enableCausility bool) (dsyncer sync.Syncer, err error))
+		info *loopbacksync.LoopBackSync) (dsyncer sync.Syncer, err error))
 	if !ok {
 		return nil, errors.New("function type is incorrect")
 	}
