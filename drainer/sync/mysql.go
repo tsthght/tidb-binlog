@@ -36,7 +36,7 @@ type MysqlSyncer struct {
 	loader  loader.Loader
 	relayer relay.Relayer
 
-	*baseSyncer
+	*BaseSyncer
 }
 
 // should only be used for unit test to create mock db
@@ -120,7 +120,7 @@ func NewMysqlSyncer(
 		db:         db,
 		loader:     loader,
 		relayer:    relayer,
-		baseSyncer: newBaseSyncer(tableInfoGetter),
+		BaseSyncer: newBaseSyncer(tableInfoGetter),
 	}
 
 	go s.run()
