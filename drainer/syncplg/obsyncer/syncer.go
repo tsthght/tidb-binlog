@@ -11,7 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package sync
+package main
 
 import (
 	"database/sql"
@@ -19,6 +19,7 @@ import (
 	"sync"
 
 	"github.com/pingcap/tidb-binlog/drainer/loopbacksync"
+	dsync "github.com/pingcap/tidb-binlog/drainer/sync"
 
 	"github.com/pingcap/errors"
 	"github.com/pingcap/log"
@@ -28,57 +29,21 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-var _ Syncer = &MysqlSyncer{}
-
 // MysqlSyncer sync binlog to Mysql
 type MysqlSyncer struct {
 	db      *sql.DB
 	loader  loader.Loader
 	relayer relay.Relayer
 
-	*BaseSyncer
+	*dsync.BaseSyncer
 }
 
 // should only be used for unit test to create mock db
 var createDB = loader.CreateDBWithSQLMode
 
-// CreateLoader create the Loader instance.
-func CreateLoader(
-	db *sql.DB,
-	cfg *DBConfig,
-	worker int,
-	batchSize int,
-	queryHistogramVec *prometheus.HistogramVec,
-	sqlMode *string,
-	destDBType string,
-	info *loopbacksync.LoopBackSync,
-) (ld loader.Loader, err error) {
-
-	var opts []loader.Option
-	opts = append(opts, loader.WorkerCount(worker), loader.BatchSize(batchSize), loader.SaveAppliedTS(destDBType == "tidb"), loader.SetloopBackSyncInfo(info))
-	if queryHistogramVec != nil {
-		opts = append(opts, loader.Metrics(&loader.MetricsGroup{
-			QueryHistogramVec: queryHistogramVec,
-			EventCounterVec:   nil,
-		}))
-	}
-
-	if cfg.SyncMode != 0 {
-		mode := loader.SyncMode(cfg.SyncMode)
-		opts = append(opts, loader.SyncModeOption(mode))
-	}
-
-	ld, err = loader.NewLoader(db, opts...)
-	if err != nil {
-		return nil, errors.Trace(err)
-	}
-
-	return
-}
-
 // NewMysqlSyncer returns a instance of MysqlSyncer
-func NewMysqlSyncer(
-	cfg *DBConfig,
+func NewSyncerPlugin(
+	cfg *dsync.DBConfig,
 	tableInfoGetter translator.TableInfoGetter,
 	worker int,
 	batchSize int,
@@ -111,7 +76,7 @@ func NewMysqlSyncer(
 		}
 	}
 
-	loader, err := CreateLoader(db, cfg, worker, batchSize, queryHistogramVec, sqlMode, destDBType, info)
+	loader, err := dsync.CreateLoader(db, cfg, worker, batchSize, queryHistogramVec, sqlMode, destDBType, info)
 	if err != nil {
 		return nil, errors.Trace(err)
 	}
@@ -120,7 +85,7 @@ func NewMysqlSyncer(
 		db:         db,
 		loader:     loader,
 		relayer:    relayer,
-		BaseSyncer: NewBaseSyncer(tableInfoGetter),
+		BaseSyncer: dsync.NewBaseSyncer(tableInfoGetter),
 	}
 
 	go s.run()
@@ -157,7 +122,7 @@ func (m *MysqlSyncer) SetSafeMode(mode bool) {
 }
 
 // Sync implements Syncer interface
-func (m *MysqlSyncer) Sync(item *Item) error {
+func (m *MysqlSyncer) Sync(item *dsync.Item) error {
 	// `relayer` is nil if relay log is disabled.
 	if m.relayer != nil {
 		pos, err := m.relayer.WriteBinlog(item.Schema, item.Table, item.Binlog, item.PrewriteValue)
@@ -206,7 +171,7 @@ func (m *MysqlSyncer) run() {
 		defer wg.Done()
 
 		for txn := range m.loader.Successes() {
-			item := txn.Metadata.(*Item)
+			item := txn.Metadata.(*dsync.Item)
 			item.AppliedTS = txn.AppliedTS
 			if m.relayer != nil {
 				m.relayer.GCBinlog(item.RelayLogPos)

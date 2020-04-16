@@ -49,21 +49,21 @@ type Syncer interface {
 
 type BaseSyncer struct {
 	*baseError
-	success         chan *Item
-	tableInfoGetter translator.TableInfoGetter
+	Success         chan *Item
+	TableInfoGetter translator.TableInfoGetter
 }
 
-func newBaseSyncer(tableInfoGetter translator.TableInfoGetter) *BaseSyncer {
+func NewBaseSyncer(tableInfoGetter translator.TableInfoGetter) *BaseSyncer {
 	return &BaseSyncer{
 		baseError:       newBaseError(),
-		success:         make(chan *Item, 8),
-		tableInfoGetter: tableInfoGetter,
+		Success:         make(chan *Item, 8),
+		TableInfoGetter: tableInfoGetter,
 	}
 }
 
 // Successes implements Syncer interface
 func (s *BaseSyncer) Successes() <-chan *Item {
-	return s.success
+	return s.Success
 }
 
 // Error implements Syncer interface

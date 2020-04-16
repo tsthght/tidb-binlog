@@ -38,14 +38,14 @@ func NewPBSyncer(dir string, tableInfoGetter translator.TableInfoGetter) (*pbSyn
 
 	s := &pbSyncer{
 		binlogger:  binlogger,
-		BaseSyncer: newBaseSyncer(tableInfoGetter),
+		BaseSyncer: NewBaseSyncer(tableInfoGetter),
 	}
 
 	return s, nil
 }
 
 func (p *pbSyncer) Sync(item *Item) error {
-	pbBinlog, err := translator.TiBinlogToPbBinlog(p.tableInfoGetter, item.Schema, item.Table, item.Binlog, item.PrewriteValue)
+	pbBinlog, err := translator.TiBinlogToPbBinlog(p.TableInfoGetter, item.Schema, item.Table, item.Binlog, item.PrewriteValue)
 	if err != nil {
 		return errors.Trace(err)
 	}
@@ -55,7 +55,7 @@ func (p *pbSyncer) Sync(item *Item) error {
 		return errors.Trace(err)
 	}
 
-	p.success <- item
+	p.Success <- item
 
 	return nil
 }
@@ -72,8 +72,8 @@ func (p *pbSyncer) saveBinlog(binlog *pb.Binlog) error {
 
 func (p *pbSyncer) Close() error {
 	err := p.binlogger.Close()
-	p.setErr(err)
-	close(p.success)
+	p.SetErr(err)
+	close(p.Success)
 
-	return p.err
+	return p.Err
 }

@@ -59,7 +59,7 @@ func (s *mysqlSuite) TestMySQLSyncerAvoidBlock(c *check.C) {
 	syncer := &MysqlSyncer{
 		db:         db,
 		loader:     fakeMySQLLoaderImpl,
-		baseSyncer: newBaseSyncer(infoGetter),
+		BaseSyncer: NewBaseSyncer(infoGetter),
 	}
 	go syncer.run()
 	gen := translator.BinlogGenerator{}
@@ -160,7 +160,7 @@ func (s *mysqlSuite) TestMySQLSyncerWithRelayer(c *check.C) {
 		db:         db,
 		loader:     fakeMySQLLoaderImpl,
 		relayer:    relayer,
-		baseSyncer: newBaseSyncer(infoGetter),
+		BaseSyncer: NewBaseSyncer(infoGetter),
 	}
 	defer syncer.Close()
 

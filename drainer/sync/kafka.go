@@ -69,7 +69,7 @@ func NewKafka(cfg *DBConfig, tableInfoGetter translator.TableInfoGetter) (*Kafka
 		topic:           topic,
 		toBeAckCommitTS: make(map[int64]int),
 		shutdown:        make(chan struct{}),
-		BaseSyncer:      newBaseSyncer(tableInfoGetter),
+		BaseSyncer:      NewBaseSyncer(tableInfoGetter),
 	}
 
 	config, err := util.NewSaramaConfig(cfg.KafkaVersion, "kafka.")
@@ -112,7 +112,7 @@ func NewKafka(cfg *DBConfig, tableInfoGetter translator.TableInfoGetter) (*Kafka
 
 // Sync implements Syncer interface
 func (p *KafkaSyncer) Sync(item *Item) error {
-	slaveBinlog, err := translator.TiBinlogToSlaveBinlog(p.tableInfoGetter, item.Schema, item.Table, item.Binlog, item.PrewriteValue)
+	slaveBinlog, err := translator.TiBinlogToSlaveBinlog(p.TableInfoGetter, item.Schema, item.Table, item.Binlog, item.PrewriteValue)
 	if err != nil {
 		return errors.Trace(err)
 	}
@@ -162,16 +162,16 @@ func (p *KafkaSyncer) saveBinlog(binlog *obinlog.Binlog, item *Item) error {
 	if waitResume {
 		select {
 		case <-p.resumeProduce:
-		case <-p.errCh:
-			return errors.Trace(p.err)
+		case <-p.ErrCh:
+			return errors.Trace(p.Err)
 		}
 	}
 
 	select {
 	case p.producer.Input() <- msg:
 		return nil
-	case <-p.errCh:
-		return errors.Trace(p.err)
+	case <-p.ErrCh:
+		return errors.Trace(p.Err)
 	}
 }
 
@@ -200,9 +200,9 @@ func (p *KafkaSyncer) run() {
 			delete(p.toBeAckCommitTS, commitTs)
 			p.toBeAckCommitTSMu.Unlock()
 
-			p.success <- item
+			p.Success <- item
 		}
-		close(p.success)
+		close(p.Success)
 	}()
 
 	// handle errors from producer
@@ -225,14 +225,14 @@ func (p *KafkaSyncer) run() {
 			if len(p.toBeAckCommitTS) > 0 && time.Since(p.lastSuccessTime) > maxWaitTimeToSendMSG {
 				log.Debug("fail to push to kafka")
 				err := errors.Errorf("fail to push msg to kafka after %v, check if kafka is up and working", maxWaitTimeToSendMSG)
-				p.setErr(err)
+				p.SetErr(err)
 				p.toBeAckCommitTSMu.Unlock()
 				return
 			}
 			p.toBeAckCommitTSMu.Unlock()
 		case <-p.shutdown:
 			err := p.producer.Close()
-			p.setErr(err)
+			p.SetErr(err)
 
 			wg.Wait()
 			return
