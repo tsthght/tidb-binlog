@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/pingcap/tidb-binlog/drainer/loopbacksync"
+	"github.com/pingcap/tidb-binlog/drainer/syncplg"
 	"github.com/pingcap/tidb-binlog/pkg/loader"
 
 	"github.com/pingcap/errors"
@@ -116,6 +117,26 @@ func createDSyncer(cfg *SyncerConfig, schema *Schema, info *loopbacksync.LoopBac
 		dsyncer, err = dsync.NewMysqlSyncer(cfg.To, schema, cfg.WorkerCount, cfg.TxnBatch, queryHistogramVec, cfg.StrSQLMode, cfg.DestDBType, relayer, info)
 		if err != nil {
 			return nil, errors.Annotate(err, "fail to create mysql dsyncer")
+		}
+	case "plugin":
+		if len(cfg.PluginName) == 0 || len(cfg.PluginPath) == 0 {
+			return nil, errors.Errorf("plugin-name or plugin-path is incorrect")
+		}
+		newSyncer, err := syncplg.LoadPlugin(cfg.PluginPath, cfg.PluginName)
+		if err != nil {
+			return nil, errors.Annotate(err, "fail to load plugin dsyncer")
+		}
+
+		var relayer relay.Relayer
+		if cfg.Relay.IsEnabled() {
+			if relayer, err = relay.NewRelayer(cfg.Relay.LogDir, cfg.Relay.MaxFileSize, schema); err != nil {
+				return nil, errors.Annotate(err, "fail to create relayer")
+			}
+		}
+
+		dsyncer, err = newSyncer(cfg.To, cfg.PluginCfgFile, schema, cfg.WorkerCount, cfg.TxnBatch, queryHistogramVec, cfg.StrSQLMode, cfg.DestDBType, relayer, info)
+		if err != nil {
+			return nil, errors.Annotate(err, "fail to create plugin dsyncer")
 		}
 		// only use for test
 	case "_intercept":
