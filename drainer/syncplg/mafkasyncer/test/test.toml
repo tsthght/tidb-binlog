@@ -1,0 +1,8 @@
+topic = "test-topic"
+group = "test-group"
+business-appkey = "test bus-appkey"
+castle-appkey = "test-ca-appkey"
+castle-name = "test-ca-name"
+stall-threshold = 1024
+wait-threshold = 2048
+max-retry-times = 10000
