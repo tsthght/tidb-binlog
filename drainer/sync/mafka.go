@@ -1,6 +1,14 @@
 package sync
 
+//#cgo CFLAGS: -I /usr/local/include
+//#cgo LDFLAGS: -L ../common  -Wl,-rpath=/usr/local/lib -lcommon
+//
+//#include "libcommon.h"
+import "C"
+
 import (
+	"encoding/json"
+
 	"github.com/pingcap/errors"
 	"github.com/pingcap/tidb-binlog/drainer/loopbacksync"
 	"github.com/pingcap/tidb-binlog/drainer/relay"
@@ -33,10 +41,25 @@ func NewMafkaSyncer(
 
 	executor := &MafkaSyncer{}
 
+	ret := C.InitProducerOnce(C.CString(cfgFile))
+	if len(C.GoString(ret)) == 0 {
+		return nil, errors.New("init producer error")
+	}
+
 	return executor, nil
 }
 
 func (ms *MafkaSyncer) Sync(item *Item) error {
+	slaveBinlog, err := translator.TiBinlogToSlaveBinlog(ms.tableInfoGetter, item.Schema, item.Table, item.Binlog, item.PrewriteValue)
+	if err != nil {
+		return errors.Trace(err)
+	}
+
+	data, err := json.Marshal(slaveBinlog)
+	if err != nil {
+		return err
+	}
+	C.AsyncMessage(C.CString(data), C.long(slaveBinlog.CommitTs))
 	return nil
 }
 
