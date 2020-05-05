@@ -110,7 +110,7 @@ func (ms *MafkaSyncer) Run () {
 	for {
 		select {
 		case <-ms.shutdown:
-			//ds.asynProducer.Close()
+			C.CloseProducer()
 			ms.SetErr(nil)
 
 			wg.Wait()
