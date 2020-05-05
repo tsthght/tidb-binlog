@@ -7,6 +7,7 @@ package sync
 import "C"
 
 import (
+	"container/list"
 	"encoding/json"
 	"sync"
 	"time"
@@ -89,9 +90,18 @@ func (ms *MafkaSyncer) Run () {
 	go func() {
 		defer wg.Done()
 
-		//ts := int64(C.GetLatestApplyTime())
+		ts := int64(C.GetLatestApplyTime())
 		ms.toBeAckCommitTSMu.Lock()
-		//遍历
+		var next *list.Element
+		for elem := ms.toBeAckCommitTS.dataList.Front(); elem != nil; elem = next {
+			if elem.Value.(Keyer).GetKey() <= ts {
+				next = elem.Next()
+				ms.success <- elem.Value.(*Item)
+				ms.toBeAckCommitTS.Remove(elem.Value.(Keyer))
+			} else {
+				break
+			}
+		}
 		ms.toBeAckCommitTSMu.Unlock()
 
 		time.Sleep(1 * time.Second)
