@@ -59,7 +59,7 @@ func (ms *MafkaSyncer) Sync(item *Item) error {
 	if err != nil {
 		return err
 	}
-	C.AsyncMessage(C.CString(data), C.long(slaveBinlog.CommitTs))
+	C.AsyncMessage(C.CString(string(data)), C.long(slaveBinlog.CommitTs))
 	return nil
 }
 
