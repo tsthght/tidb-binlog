@@ -26,7 +26,7 @@ var _ Syncer = &pbSyncer{}
 type pbSyncer struct {
 	binlogger binlogfile.Binlogger
 
-	*baseSyncer
+	*BaseSyncer
 }
 
 // NewPBSyncer sync binlog to files
@@ -38,7 +38,7 @@ func NewPBSyncer(dir string, tableInfoGetter translator.TableInfoGetter) (*pbSyn
 
 	s := &pbSyncer{
 		binlogger:  binlogger,
-		baseSyncer: newBaseSyncer(tableInfoGetter),
+		BaseSyncer: newBaseSyncer(tableInfoGetter),
 	}
 
 	return s, nil
@@ -77,7 +77,7 @@ func (p *pbSyncer) saveBinlog(binlog *pb.Binlog) error {
 
 func (p *pbSyncer) Close() error {
 	err := p.binlogger.Close()
-	p.setErr(err)
+	p.SetErr(err)
 	close(p.success)
 
 	return p.err

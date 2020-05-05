@@ -68,7 +68,7 @@ func newBaseError() *baseError {
 	}
 }
 
-func (b *baseError) error() <-chan error {
+func (b *baseError) Error() <-chan error {
 	ret := make(chan error, 1)
 	go func() {
 		<-b.errCh
@@ -78,7 +78,7 @@ func (b *baseError) error() <-chan error {
 	return ret
 }
 
-func (b *baseError) setErr(err error) {
+func (b *baseError) SetErr(err error) {
 	b.err = err
 	close(b.errCh)
 }

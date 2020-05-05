@@ -48,7 +48,7 @@ type KafkaSyncer struct {
 	lastSuccessTime time.Time
 
 	shutdown chan struct{}
-	*baseSyncer
+	*BaseSyncer
 }
 
 // newAsyncProducer will only be changed in unit test for mock
@@ -69,7 +69,7 @@ func NewKafka(cfg *DBConfig, tableInfoGetter translator.TableInfoGetter) (*Kafka
 		topic:           topic,
 		toBeAckCommitTS: make(map[int64]int),
 		shutdown:        make(chan struct{}),
-		baseSyncer:      newBaseSyncer(tableInfoGetter),
+		BaseSyncer:      newBaseSyncer(tableInfoGetter),
 	}
 
 	config, err := util.NewSaramaConfig(cfg.KafkaVersion, "kafka.")
@@ -234,14 +234,14 @@ func (p *KafkaSyncer) run() {
 			if len(p.toBeAckCommitTS) > 0 && time.Since(p.lastSuccessTime) > maxWaitTimeToSendMSG {
 				log.Debug("fail to push to kafka")
 				err := errors.Errorf("fail to push msg to kafka after %v, check if kafka is up and working", maxWaitTimeToSendMSG)
-				p.setErr(err)
+				p.SetErr(err)
 				p.toBeAckCommitTSMu.Unlock()
 				return
 			}
 			p.toBeAckCommitTSMu.Unlock()
 		case <-p.shutdown:
 			err := p.producer.Close()
-			p.setErr(err)
+			p.SetErr(err)
 
 			wg.Wait()
 			return
