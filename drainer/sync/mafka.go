@@ -85,8 +85,10 @@ func (ms *MafkaSyncer) Sync(item *Item) error {
 	} else {
 		for _, dml := range txn.DMLs {
 			log.Info("###", zap.String("dml", fmt.Sprintf("%v", dml)))
+
+			normal, _ := dml.Sql()
+			log.Info("===", zap.String("sql", normal))
 			/*
-			normal, args := dml.Sql()
 			sql, err := GenSQL(normal, args, true, time.Local)
 			if err != nil {
 				return err
