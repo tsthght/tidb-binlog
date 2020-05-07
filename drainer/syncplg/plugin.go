@@ -18,7 +18,7 @@ const (
 )
 
 type FactoryInterface interface {
-	NewSyncerFunc (
+	NewSyncerPlugin (
 		cfg *sync.DBConfig,
 		cfgFile string,
 		tableInfoGetter translator.TableInfoGetter,
@@ -65,5 +65,5 @@ func LoadPlugin(path, name string) (NewSyncerFunc, error) {
 	if !ok {
 		return nil, errors.New("not implement FactoryInterface")
 	}
-	return plg.NewSyncerFunc, nil
+	return plg.NewSyncerPlugin, nil
 }
