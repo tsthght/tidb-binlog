@@ -43,7 +43,7 @@ WHERE table_schema = ? AND table_name = ?
 ORDER BY seq_in_index ASC;`
 )
 
-type tableInfo struct {
+type TableInfo struct {
 	columns    []string
 	primaryKey *indexInfo
 	// include primary key if have
@@ -57,8 +57,8 @@ type indexInfo struct {
 
 // getTableInfo returns information like (non-generated) column names and
 // unique keys about the specified table
-func getTableInfo(db *gosql.DB, schema string, table string) (info *tableInfo, err error) {
-	info = new(tableInfo)
+func getTableInfo(db *gosql.DB, schema string, table string) (info *TableInfo, err error) {
+	info = new(TableInfo)
 
 	if info.columns, err = getColsOfTbl(db, schema, table); err != nil {
 		return nil, errors.Annotatef(err, "table `%s`.`%s`", schema, table)
