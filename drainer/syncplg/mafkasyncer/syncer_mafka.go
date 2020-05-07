@@ -10,7 +10,7 @@ import (
 
 //SyncerMafka is a syncer for Mafka
 
-//NewSyncerPlugin return A syncer instance which implemented interface of sync.Syncer
+//NewSyncerPlugin return Asyncer instance which implemented interface of sync.Syncer
 func NewSyncerPlugin (
 	cfg *sync.DBConfig,
 	cfgFile string,
