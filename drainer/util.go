@@ -100,7 +100,7 @@ func GenCheckPointCfg(cfg *Config, id uint64) (*checkpoint.Config, error) {
 		}
 	case "":
 		switch cfg.SyncerCfg.DestDBType {
-		case "mysql", "tidb", "plugin":
+		case "mysql", "tidb":
 			checkpointCfg.CheckpointType = cfg.SyncerCfg.DestDBType
 			checkpointCfg.Db = &checkpoint.DBConfig{
 				Host:     cfg.SyncerCfg.To.Host,
@@ -110,7 +110,7 @@ func GenCheckPointCfg(cfg *Config, id uint64) (*checkpoint.Config, error) {
 			}
 		case "pb", "file":
 			checkpointCfg.CheckpointType = "file"
-		case "kafka":
+		case "kafka", "plugin":
 			checkpointCfg.CheckpointType = "file"
 		case "flash":
 			return nil, errors.New("the flash DestDBType is no longer supported")
