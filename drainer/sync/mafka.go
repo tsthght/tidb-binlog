@@ -86,9 +86,9 @@ func (ms *MafkaSyncer) Sync(item *Item) error {
 		for _, dml := range txn.DMLs {
 			log.Info("###", zap.String("dml", fmt.Sprintf("%v", dml)))
 
-			normal, _ := dml.Sql()
-			log.Info("===", zap.String("sql", normal))
-			m := NewMessage(dml.Database, dml.Table, normal, cts, time.Now().Unix())
+			//normal, _ := dml.Sql()
+			log.Info("===", zap.String("sql", "select * from test"))
+			m := NewMessage(dml.Database, dml.Table, "select * from test", cts, time.Now().Unix())
 			_, err = json.Marshal(m)
 			if err != nil {
 				return err
