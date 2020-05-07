@@ -88,6 +88,16 @@ func (ms *MafkaSyncer) Sync(item *Item) error {
 
 			normal, _ := dml.Sql()
 			log.Info("===", zap.String("sql", normal))
+			m := NewMessage(dml.Database, dml.Table, normal, cts, time.Now().Unix())
+			_, err = json.Marshal(m)
+			if err != nil {
+				return err
+			}
+			data, err := json.Marshal(m)
+			if err != nil {
+				return err
+			}
+			C.AsyncMessage(C.CString(string(data)), C.long(m.Cts))
 			/*
 			sql, err := GenSQL(normal, args, true, time.Local)
 			if err != nil {
