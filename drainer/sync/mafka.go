@@ -64,6 +64,7 @@ func NewMafkaSyncer (
 }
 
 func (ms *MafkaSyncer) Sync(item *Item) error {
+	log.Info("Mafka call sync")
 	txn, err := translator.TiBinlogToTxn(ms.tableInfoGetter, item.Schema, item.Table, item.Binlog, item.PrewriteValue, item.ShouldSkip)
 	if err != nil {
 		return errors.Trace(err)
@@ -128,6 +129,7 @@ func (ms *MafkaSyncer) Run () {
 		for {
 			select {
 			case <-checkTick.C:
+				log.Info("Mafka check tick...")
 				ts := int64(C.GetLatestApplyTime())
 				ms.toBeAckCommitTSMu.Lock()
 				var next *list.Element
