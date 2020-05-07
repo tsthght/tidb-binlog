@@ -69,7 +69,7 @@ func (ms *MafkaSyncer) Sync(item *Item) error {
 	if err != nil {
 		return errors.Trace(err)
 	}
-
+return nil
 	cts := item.Binlog.GetCommitTs()
 	if txn.DDL != nil {
 		sqls := strings.Split(txn.DDL.SQL, ";")
