@@ -8,8 +8,8 @@ import "C"
 
 import (
 	"container/list"
-	"encoding/json"
-	"strings"
+	//"encoding/json"
+	//"strings"
 	"sync"
 	"time"
 	"fmt"
@@ -20,7 +20,7 @@ import (
 	"github.com/pingcap/tidb-binlog/drainer/relay"
 	"github.com/pingcap/tidb-binlog/drainer/translator"
 	"github.com/prometheus/client_golang/prometheus"
-	"go.uber.org/zap"
+	//"go.uber.org/zap"
 )
 
 type MafkaSyncer struct {
