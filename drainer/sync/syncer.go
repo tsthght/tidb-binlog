@@ -49,14 +49,14 @@ type Syncer interface {
 	SetSafeMode(mode bool) bool
 }
 
-type BaseSyncer struct {
+type baseSyncer struct {
 	*baseError
 	success         chan *Item
 	tableInfoGetter translator.TableInfoGetter
 }
 
-func newBaseSyncer(tableInfoGetter translator.TableInfoGetter) *BaseSyncer {
-	return &BaseSyncer{
+func newBaseSyncer(tableInfoGetter translator.TableInfoGetter) *baseSyncer {
+	return &baseSyncer{
 		baseError:       newBaseError(),
 		success:         make(chan *Item, 8),
 		tableInfoGetter: tableInfoGetter,
@@ -64,11 +64,11 @@ func newBaseSyncer(tableInfoGetter translator.TableInfoGetter) *BaseSyncer {
 }
 
 // Successes implements Syncer interface
-func (s *BaseSyncer) Successes() <-chan *Item {
+func (s *baseSyncer) Successes() <-chan *Item {
 	return s.success
 }
 
 // Error implements Syncer interface
-func (s *BaseSyncer) Error() <-chan error {
+func (s *baseSyncer) Error() <-chan error {
 	return s.Error()
 }

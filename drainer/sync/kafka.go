@@ -48,7 +48,7 @@ type KafkaSyncer struct {
 	lastSuccessTime time.Time
 
 	shutdown chan struct{}
-	*BaseSyncer
+	*baseSyncer
 }
 
 // newAsyncProducer will only be changed in unit test for mock
@@ -69,7 +69,7 @@ func NewKafka(cfg *DBConfig, tableInfoGetter translator.TableInfoGetter) (*Kafka
 		topic:           topic,
 		toBeAckCommitTS: make(map[int64]int),
 		shutdown:        make(chan struct{}),
-		BaseSyncer:      newBaseSyncer(tableInfoGetter),
+		baseSyncer:      newBaseSyncer(tableInfoGetter),
 	}
 
 	config, err := util.NewSaramaConfig(cfg.KafkaVersion, "kafka.")

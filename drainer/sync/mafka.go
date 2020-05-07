@@ -26,7 +26,7 @@ type MafkaSyncer struct {
 	toBeAckCommitTSMu      sync.Mutex
 	toBeAckCommitTS *MapList
 	shutdown chan struct{}
-	*BaseSyncer
+	*baseSyncer
 }
 
 func NewMafkaSyncer(
@@ -55,6 +55,7 @@ func NewMafkaSyncer(
 	executor := &MafkaSyncer{}
 	executor.shutdown = make(chan struct{})
 	executor.toBeAckCommitTS = NewMapList()
+	executor.baseSyncer = newBaseSyncer(tableInfoGetter)
 	executor.Run()
 
 	return executor, nil
@@ -101,6 +102,10 @@ func (ms *MafkaSyncer) Sync(item *Item) error {
 }
 
 func (ms *MafkaSyncer) Close() error {
+	if ms.shutdown != nil {
+		close(ms.shutdown)
+		ms.shutdown = nil
+	}
 	return nil
 }
 
@@ -116,30 +121,34 @@ func (ms *MafkaSyncer) Run () {
 	go func() {
 		defer wg.Done()
 
-		ts := int64(C.GetLatestApplyTime())
-		ms.toBeAckCommitTSMu.Lock()
-		var next *list.Element
-		for elem := ms.toBeAckCommitTS.dataList.Front(); elem != nil; elem = next {
-			if elem.Value.(Keyer).GetKey() <= ts {
-				next = elem.Next()
-				ms.success <- elem.Value.(*Item)
-				ms.toBeAckCommitTS.Remove(elem.Value.(Keyer))
-			} else {
-				break
+		checkTick := time.NewTicker(time.Second)
+		defer checkTick.Stop()
+		for {
+			select {
+			case <-checkTick.C:
+				ts := int64(C.GetLatestApplyTime())
+				ms.toBeAckCommitTSMu.Lock()
+				var next *list.Element
+				for elem := ms.toBeAckCommitTS.GetDataList().Front(); elem != nil; elem = next {
+					if elem.Value.(Keyer).GetKey() <= ts {
+						next = elem.Next()
+						ms.success <- elem.Value.(*Item)
+						ms.toBeAckCommitTS.Remove(elem.Value.(Keyer))
+					} else {
+						break
+					}
+				}
+				ms.toBeAckCommitTSMu.Unlock()
 			}
 		}
-		ms.toBeAckCommitTSMu.Unlock()
-
-		time.Sleep(1 * time.Second)
 	}()
 
 	for {
 		select {
 		case <-ms.shutdown:
+			wg.Wait()
 			C.CloseProducer()
 			ms.SetErr(nil)
-
-			wg.Wait()
 			return
 		}
 	}

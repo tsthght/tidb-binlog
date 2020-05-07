@@ -26,7 +26,7 @@ var _ Syncer = &pbSyncer{}
 type pbSyncer struct {
 	binlogger binlogfile.Binlogger
 
-	*BaseSyncer
+	*baseSyncer
 }
 
 // NewPBSyncer sync binlog to files
@@ -38,7 +38,7 @@ func NewPBSyncer(dir string, tableInfoGetter translator.TableInfoGetter) (*pbSyn
 
 	s := &pbSyncer{
 		binlogger:  binlogger,
-		BaseSyncer: newBaseSyncer(tableInfoGetter),
+		baseSyncer: newBaseSyncer(tableInfoGetter),
 	}
 
 	return s, nil

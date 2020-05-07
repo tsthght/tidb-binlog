@@ -61,3 +61,7 @@ func (mapList *MapList) RemoveBefore(k int64) {
 func (mapList *MapList) Size () int {
 	return mapList.dataList.Len()
 }
+
+func (mapList *MapList) GetDataList () *list.List {
+	return mapList.dataList
+}
