@@ -69,7 +69,7 @@ func (ms *MafkaSyncer) Sync(item *Item) error {
 	if err != nil {
 		return errors.Trace(err)
 	}
-return nil
+
 	cts := item.Binlog.GetCommitTs()
 	if txn.DDL != nil {
 		sqls := strings.Split(txn.DDL.SQL, ";")
@@ -84,6 +84,8 @@ return nil
 		}
 	} else {
 		for _, dml := range txn.DMLs {
+			log.Info("###", zap.String("dml", fmt.Sprintf("%v", dml)))
+			/*
 			normal, args := dml.Sql()
 			sql, err := GenSQL(normal, args, true, time.Local)
 			if err != nil {
@@ -96,6 +98,7 @@ return nil
 			}
 			log.Info("send to mafka", zap.String("sql", m.Sql), zap.Int64("commit-ts", m.Cts), zap.Int64("applied-ts", m.Ats))
 			//C.AsyncMessage(C.CString(string(data)), C.long(m.Cts))
+			 */
 		}
 	}
 	//ms.toBeAckCommitTSMu.Lock()
