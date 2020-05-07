@@ -227,5 +227,5 @@ func (m *MysqlSyncer) run() {
 
 	wg.Wait()
 	m.db.Close()
-	m.SetErr(err)
+	m.setErr(err)
 }

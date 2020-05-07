@@ -147,7 +147,7 @@ func (ms *MafkaSyncer) Run () {
 				cur := time.Now().Unix()
 				if ms.toBeAckCommitTS.Size() > 0 && cur != 0 && cur - tss > ms.maxWaitThreshold {
 					err := errors.New(fmt.Sprintf("fail to push msg to mafka after %v, check if kafka is up and working", ms.maxWaitThreshold))
-					ms.SetErr(err)
+					ms.setErr(err)
 					log.Warn("fail to push msg to mafka, MafkaSyncer exit")
 					close(ms.shutdown)
 				}
@@ -162,7 +162,7 @@ func (ms *MafkaSyncer) Run () {
 			wg.Wait()
 			log.Info("MafkaSyncer exited")
 			C.CloseProducer()
-			ms.SetErr(nil)
+			ms.setErr(nil)
 			return
 		}
 	}
