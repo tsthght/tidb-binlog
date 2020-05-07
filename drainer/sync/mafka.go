@@ -14,10 +14,12 @@ import (
 	"time"
 
 	"github.com/pingcap/errors"
+	"github.com/pingcap/log"
 	"github.com/pingcap/tidb-binlog/drainer/loopbacksync"
 	"github.com/pingcap/tidb-binlog/drainer/relay"
 	"github.com/pingcap/tidb-binlog/drainer/translator"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.uber.org/zap"
 )
 
 type MafkaSyncer struct {
@@ -73,6 +75,7 @@ func (ms *MafkaSyncer) Sync(item *Item) error {
 			if err != nil {
 				return err
 			}
+			log.Info("send to mafka", zap.String("sql", m.Sql), zap.Int64("commit-ts", m.Cts), zap.Int64("applied-ts", m.Ats))
 			C.AsyncMessage(C.CString(string(data)), C.long(m.Cts))
 		}
 	} else {
@@ -87,6 +90,7 @@ func (ms *MafkaSyncer) Sync(item *Item) error {
 			if err != nil {
 				return err
 			}
+			log.Info("send to mafka", zap.String("sql", m.Sql), zap.Int64("commit-ts", m.Cts), zap.Int64("applied-ts", m.Ats))
 			C.AsyncMessage(C.CString(string(data)), C.long(m.Cts))
 		}
 	}
