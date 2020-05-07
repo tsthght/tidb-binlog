@@ -191,6 +191,7 @@ func (dml *DML) updateSQL() (sql string, args []interface{}) {
 
 func (dml *DML) buildWhere(builder *strings.Builder) (args []interface{}) {
 	wnames, wargs := dml.whereSlice()
+	log.Warn("buildWhere", zap.String("name", fmt.Sprintf("%v", wnames)), zap.String("wargs", fmt.Sprintf("%v", wargs)))
 	for i := 0; i < len(wnames); i++ {
 		if i > 0 {
 			builder.WriteString(" AND ")
