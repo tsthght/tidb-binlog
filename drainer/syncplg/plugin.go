@@ -14,8 +14,22 @@ import (
 
 const (
 	//NewSyncerPlugin is the name of exported function by syncer plugin
-	NewSyncerPlugin = "NewSyncerPlugin"
+	NewPlugin = "NewPluginFactory"
 )
+
+type FactoryInterface interface {
+	NewSyncerFunc (
+		cfg *sync.DBConfig,
+		cfgFile string,
+		tableInfoGetter translator.TableInfoGetter,
+		worker int,
+		batchSize int,
+		queryHistogramVec *prometheus.HistogramVec,
+		sqlMode *string,
+		destDBType string,
+		relayer relay.Relayer,
+		info *loopbacksync.LoopBackSync) (dsyncer sync.Syncer, err error)
+}
 
 //NewSyncerFunc is a function type which syncer plugin must implement
 type NewSyncerFunc func(
@@ -38,23 +52,18 @@ func LoadPlugin(path, name string) (NewSyncerFunc, error) {
 		return nil, fmt.Errorf("faile to Open %s . err: %s", fp, err.Error())
 	}
 
-	sym, err := p.Lookup(NewSyncerPlugin)
+	sym, err := p.Lookup(NewPlugin)
 	if err != nil {
 		return nil, err
 	}
-	newSyncer, ok := sym.(func(
-		cfg *sync.DBConfig,
-		cfgFile string,
-		tableInfoGetter translator.TableInfoGetter,
-		worker int,
-		batchSize int,
-		queryHistogramVec *prometheus.HistogramVec,
-		sqlMode *string,
-		destDBType string,
-		relayer relay.Relayer,
-		info *loopbacksync.LoopBackSync) (dsyncer sync.Syncer, err error))
+	newFactory, ok := sym.(func() interface{})
 	if !ok {
 		return nil, errors.New("function type is incorrect")
 	}
-	return newSyncer, nil
+	fac := newFactory()
+	plg, ok := fac.(FactoryInterface)
+	if !ok {
+		return nil, errors.New("not implement FactoryInterface")
+	}
+	return plg.NewSyncerFunc, nil
 }

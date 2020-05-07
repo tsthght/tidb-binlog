@@ -8,10 +8,15 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-//SyncerMafka is a syncer for Mafka
+//PluginFactory is the Factory struct
+type PluginFactory struct {}
+
+func NewPluginFactory() interface{} {
+	return &PluginFactory{}
+}
 
 //NewSyncerPlugin return Asyncer instance which implemented interface of sync.Syncer
-func NewSyncerPlugin (
+func (pf *PluginFactory) NewSyncerPlugin (
 	cfg *sync.DBConfig,
 	cfgFile string,
 	tableInfoGetter translator.TableInfoGetter,
