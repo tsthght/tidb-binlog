@@ -9,7 +9,7 @@ import (
 
 //DemoSyncer is a syncer demo
 type DemoSyncer struct {
-	*BaseSyncer
+	*baseSyncer
 }
 
 func NewPluginSyncer(
