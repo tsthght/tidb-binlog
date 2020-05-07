@@ -8,11 +8,11 @@ import "C"
 
 import (
 	"container/list"
-	//"encoding/json"
-	//"strings"
+	"encoding/json"
+	"fmt"
+	"strings"
 	"sync"
 	"time"
-	"fmt"
 
 	"github.com/pingcap/errors"
 	"github.com/pingcap/log"
@@ -20,7 +20,7 @@ import (
 	"github.com/pingcap/tidb-binlog/drainer/relay"
 	"github.com/pingcap/tidb-binlog/drainer/translator"
 	"github.com/prometheus/client_golang/prometheus"
-	//"go.uber.org/zap"
+	"go.uber.org/zap"
 )
 
 type MafkaSyncer struct {
@@ -41,7 +41,7 @@ func NewMafkaSyncer (
 	sqlMode *string,
 	destDBType string,
 	relayer relay.Relayer,
-	info *loopbacksync.LoopBackSync) (dsyncer Syncer, err error) {/*
+	info *loopbacksync.LoopBackSync) (dsyncer Syncer, err error) {
 	if cfgFile == "" {
 		return nil, errors.New("config file name is empty")
 	}
@@ -52,19 +52,19 @@ func NewMafkaSyncer (
 	}
 
 	time.Sleep(5 * time.Second)
-	*/
+
 	executor := &MafkaSyncer{}
 	executor.shutdown = make(chan struct{})
 	executor.toBeAckCommitTS = NewMapList()
 	executor.baseSyncer = newBaseSyncer(tableInfoGetter)
-	//executor.maxWaitThreshold = int64(C.GetWaitThreshold())
+	executor.maxWaitThreshold = int64(C.GetWaitThreshold())
 	log.Info("New MafkaSyncer success")
-	//go executor.Run()
+	go executor.Run()
 
 	return executor, nil
 }
 
-func (ms *MafkaSyncer) Sync(item *Item) error {/*
+func (ms *MafkaSyncer) Sync(item *Item) error {
 	txn, err := translator.TiBinlogToTxn(ms.tableInfoGetter, item.Schema, item.Table, item.Binlog, item.PrewriteValue, item.ShouldSkip)
 	if err != nil {
 		return errors.Trace(err)
@@ -101,7 +101,7 @@ func (ms *MafkaSyncer) Sync(item *Item) error {/*
 	ms.toBeAckCommitTSMu.Lock()
 	ms.toBeAckCommitTS.Push(item)
 	ms.toBeAckCommitTSMu.Unlock()
-*/
+
 	return nil
 }
 
