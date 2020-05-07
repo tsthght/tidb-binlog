@@ -75,12 +75,12 @@ func (ms *MafkaSyncer) Sync(item *Item) error {
 		sqls := strings.Split(txn.DDL.SQL, ";")
 		for _, sql := range sqls {
 			m := NewMessage(txn.DDL.Database, txn.DDL.Table, sql, cts, time.Now().Unix())
-			data, err := json.Marshal(m)
+			_, err = json.Marshal(m)
 			if err != nil {
 				return err
 			}
 			log.Info("send to mafka", zap.String("sql", m.Sql), zap.Int64("commit-ts", m.Cts), zap.Int64("applied-ts", m.Ats))
-			C.AsyncMessage(C.CString(string(data)), C.long(m.Cts))
+			//C.AsyncMessage(C.CString(string(data)), C.long(m.Cts))
 		}
 	} else {
 		for _, dml := range txn.DMLs {
@@ -90,17 +90,17 @@ func (ms *MafkaSyncer) Sync(item *Item) error {
 				return err
 			}
 			m := NewMessage(dml.Database, dml.Table, sql, cts, time.Now().Unix())
-			data, err := json.Marshal(m)
+			_, err = json.Marshal(m)
 			if err != nil {
 				return err
 			}
 			log.Info("send to mafka", zap.String("sql", m.Sql), zap.Int64("commit-ts", m.Cts), zap.Int64("applied-ts", m.Ats))
-			C.AsyncMessage(C.CString(string(data)), C.long(m.Cts))
+			//C.AsyncMessage(C.CString(string(data)), C.long(m.Cts))
 		}
 	}
-	ms.toBeAckCommitTSMu.Lock()
-	ms.toBeAckCommitTS.Push(item)
-	ms.toBeAckCommitTSMu.Unlock()
+	//ms.toBeAckCommitTSMu.Lock()
+	//ms.toBeAckCommitTS.Push(item)
+	//ms.toBeAckCommitTSMu.Unlock()
 
 	return nil
 }
