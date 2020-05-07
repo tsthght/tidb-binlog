@@ -12,11 +12,11 @@ import (
 type PluginFactory struct {}
 
 func NewPluginFactory() interface{} {
-	return &PluginFactory{}
+	return PluginFactory{}
 }
 
 //NewSyncerPlugin return Asyncer instance which implemented interface of sync.Syncer
-func (pf *PluginFactory) NewSyncerPlugin (
+func (pf PluginFactory) NewSyncerPlugin (
 	cfg *sync.DBConfig,
 	cfgFile string,
 	tableInfoGetter translator.TableInfoGetter,
