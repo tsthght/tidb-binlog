@@ -12,6 +12,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"fmt"
 
 	"github.com/pingcap/errors"
 	"github.com/pingcap/log"
@@ -26,6 +27,7 @@ type MafkaSyncer struct {
 	toBeAckCommitTSMu      sync.Mutex
 	toBeAckCommitTS *MapList
 	shutdown chan struct{}
+	maxWaitThreshold int64
 	*baseSyncer
 }
 
@@ -56,6 +58,7 @@ func NewMafkaSyncer(
 	executor.shutdown = make(chan struct{})
 	executor.toBeAckCommitTS = NewMapList()
 	executor.baseSyncer = newBaseSyncer(tableInfoGetter)
+	executor.maxWaitThreshold = int64(C.GetWaitThreshold())
 	executor.Run()
 
 	return executor, nil
@@ -137,6 +140,14 @@ func (ms *MafkaSyncer) Run () {
 					} else {
 						break
 					}
+				}
+
+				tss := int64(C.GetLatestSuccessTime())
+				cur := time.Now().Unix()
+				if ms.toBeAckCommitTS.Size() > 0 && cur != 0 && cur - tss > ms.maxWaitThreshold {
+					err := errors.New(fmt.Sprintf("fail to push msg to kafka after %v, check if kafka is up and working", ms.maxWaitThreshold))
+					ms.SetErr(err)
+					close(ms.shutdown)
 				}
 				ms.toBeAckCommitTSMu.Unlock()
 			}
