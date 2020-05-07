@@ -57,6 +57,7 @@ func NewMafkaSyncer (
 	executor.toBeAckCommitTS = NewMapList()
 	executor.baseSyncer = newBaseSyncer(tableInfoGetter)
 	executor.maxWaitThreshold = int64(C.GetWaitThreshold())
+	log.Info("New MafkaSyncer success")
 	executor.Run()
 
 	return executor, nil
@@ -116,7 +117,7 @@ func (ms *MafkaSyncer) SetSafeMode(mode bool) bool {
 
 func (ms *MafkaSyncer) Run () {
 	var wg sync.WaitGroup
-
+	log.Info("MafkaSyncer Running now")
 	// handle successes from producer
 	wg.Add(1)
 	go func() {
@@ -143,8 +144,9 @@ func (ms *MafkaSyncer) Run () {
 				tss := int64(C.GetLatestSuccessTime())
 				cur := time.Now().Unix()
 				if ms.toBeAckCommitTS.Size() > 0 && cur != 0 && cur - tss > ms.maxWaitThreshold {
-					err := errors.New(fmt.Sprintf("fail to push msg to kafka after %v, check if kafka is up and working", ms.maxWaitThreshold))
+					err := errors.New(fmt.Sprintf("fail to push msg to mafka after %v, check if kafka is up and working", ms.maxWaitThreshold))
 					ms.SetErr(err)
+					log.Warn("fail to push msg to mafka, MafkaSyncer exit")
 					close(ms.shutdown)
 				}
 				ms.toBeAckCommitTSMu.Unlock()
@@ -156,6 +158,7 @@ func (ms *MafkaSyncer) Run () {
 		select {
 		case <-ms.shutdown:
 			wg.Wait()
+			log.Info("MafkaSyncer exited")
 			C.CloseProducer()
 			ms.SetErr(nil)
 			return
