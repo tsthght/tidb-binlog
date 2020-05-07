@@ -57,7 +57,7 @@ func NewMafkaSyncer (
 	executor.shutdown = make(chan struct{})
 	executor.toBeAckCommitTS = NewMapList()
 	executor.baseSyncer = newBaseSyncer(tableInfoGetter)
-	executor.maxWaitThreshold = int64(C.GetWaitThreshold())
+	//executor.maxWaitThreshold = int64(C.GetWaitThreshold())
 	log.Info("New MafkaSyncer success")
 	//go executor.Run()
 
