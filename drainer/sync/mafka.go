@@ -58,13 +58,12 @@ func NewMafkaSyncer (
 	executor.baseSyncer = newBaseSyncer(tableInfoGetter)
 	executor.maxWaitThreshold = int64(C.GetWaitThreshold())
 	log.Info("New MafkaSyncer success")
-	executor.Run()
+	go executor.Run()
 
 	return executor, nil
 }
 
 func (ms *MafkaSyncer) Sync(item *Item) error {
-	log.Info("Mafka call sync")
 	txn, err := translator.TiBinlogToTxn(ms.tableInfoGetter, item.Schema, item.Table, item.Binlog, item.PrewriteValue, item.ShouldSkip)
 	if err != nil {
 		return errors.Trace(err)
@@ -129,7 +128,6 @@ func (ms *MafkaSyncer) Run () {
 		for {
 			select {
 			case <-checkTick.C:
-				log.Info("Mafka check tick...")
 				ts := int64(C.GetLatestApplyTime())
 				ms.toBeAckCommitTSMu.Lock()
 				var next *list.Element
