@@ -277,7 +277,7 @@ func (dml *DML) insertSQL() (sql string, args []interface{}) {
 	return
 }
 
-func (dml *DML) sql() (sql string, args []interface{}) {
+func (dml *DML) Sql() (sql string, args []interface{}) {
 	switch dml.Tp {
 	case InsertDMLType:
 		return dml.insertSQL()

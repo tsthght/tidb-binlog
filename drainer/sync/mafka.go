@@ -9,6 +9,7 @@ import "C"
 import (
 	"container/list"
 	"encoding/json"
+	"strings"
 	"sync"
 	"time"
 
@@ -58,16 +59,37 @@ func NewMafkaSyncer(
 }
 
 func (ms *MafkaSyncer) Sync(item *Item) error {
-	slaveBinlog, err := translator.TiBinlogToSlaveBinlog(ms.tableInfoGetter, item.Schema, item.Table, item.Binlog, item.PrewriteValue)
+	txn, err := translator.TiBinlogToTxn(ms.tableInfoGetter, item.Schema, item.Table, item.Binlog, item.PrewriteValue, item.ShouldSkip)
 	if err != nil {
 		return errors.Trace(err)
 	}
 
-	data, err := json.Marshal(slaveBinlog)
-	if err != nil {
-		return err
+	cts := item.Binlog.GetCommitTs()
+	if txn.DDL != nil {
+		sqls := strings.Split(txn.DDL.SQL, ";")
+		for _, sql := range sqls {
+			m := NewMessage(txn.DDL.Database, txn.DDL.Table, sql, cts, time.Now().Unix())
+			data, err := json.Marshal(m)
+			if err != nil {
+				return err
+			}
+			C.AsyncMessage(C.CString(string(data)), C.long(m.Cts))
+		}
+	} else {
+		for _, dml := range txn.DMLs {
+			normal, args := dml.Sql()
+			sql, err := GenSQL(normal, args, true, time.Local)
+			if err != nil {
+				return err
+			}
+			m := NewMessage(dml.Database, dml.Table, sql, cts, time.Now().Unix())
+			data, err := json.Marshal(m)
+			if err != nil {
+				return err
+			}
+			C.AsyncMessage(C.CString(string(data)), C.long(m.Cts))
+		}
 	}
-	C.AsyncMessage(C.CString(string(data)), C.long(item.Binlog.CommitTs))
 	ms.toBeAckCommitTSMu.Lock()
 	ms.toBeAckCommitTS.Push(item)
 	ms.toBeAckCommitTSMu.Unlock()
@@ -121,4 +143,22 @@ func (ms *MafkaSyncer) Run () {
 
 func (it *Item) GetKey() int64 {
 	return it.Binlog.CommitTs
+}
+
+type Message struct {
+	database string `json:"database-name"`
+	table    string `json:"table-name"`
+	Sql      string `json:"sql"`
+	Cts      int64  `json:"committed-timestamp"`
+	Ats      int64  `json:"applied-timestamp"`
+}
+
+func NewMessage(db, tb, sql string, cts, ats int64) *Message {
+	return &Message{
+		database: db,
+		table:    tb,
+		Sql:      sql,
+		Cts:      cts,
+		Ats:      ats,
+	}
 }
