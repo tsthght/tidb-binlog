@@ -45,7 +45,7 @@ type executor struct {
 	workerCount       int
 	info              *loopbacksync.LoopBackSync
 	queryHistogramVec *prometheus.HistogramVec
-	refreshTableInfo  func(schema string, table string) (info *tableInfo, err error)
+	refreshTableInfo  func(schema string, table string) (info *TableInfo, err error)
 }
 
 func newExecutor(db *gosql.DB) *executor {
@@ -58,7 +58,7 @@ func newExecutor(db *gosql.DB) *executor {
 	return exe
 }
 
-func (e *executor) withRefreshTableInfo(fn func(schema string, table string) (info *tableInfo, err error)) *executor {
+func (e *executor) withRefreshTableInfo(fn func(schema string, table string) (info *TableInfo, err error)) *executor {
 	e.refreshTableInfo = fn
 	return e
 }

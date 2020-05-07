@@ -44,7 +44,7 @@ type DML struct {
 	OldValues map[string]interface{}
 	Values    map[string]interface{}
 
-	info *tableInfo
+	info *TableInfo
 }
 
 // DDL holds the ddl info
