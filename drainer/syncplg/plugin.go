@@ -42,7 +42,17 @@ func LoadPlugin(path, name string) (NewSyncerFunc, error) {
 	if err != nil {
 		return nil, err
 	}
-	newSyncer, ok := sym.(NewSyncerFunc)
+	newSyncer, ok := sym.(func(
+		cfg *sync.DBConfig,
+		cfgFile string,
+		tableInfoGetter translator.TableInfoGetter,
+		worker int,
+		batchSize int,
+		queryHistogramVec *prometheus.HistogramVec,
+		sqlMode *string,
+		destDBType string,
+		relayer relay.Relayer,
+		info *loopbacksync.LoopBackSync) (dsyncer sync.Syncer, err error))
 	if !ok {
 		return nil, errors.New("function type is incorrect")
 	}
