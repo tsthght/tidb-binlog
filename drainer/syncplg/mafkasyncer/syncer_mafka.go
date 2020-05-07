@@ -11,7 +11,7 @@ import (
 //SyncerMafka is a syncer for Mafka
 
 //NewSyncerPlugin return A syncer instance which implemented interface of sync.Syncer
-func NewSyncerPlugin(
+func NewSyncerPlugin (
 	cfg *sync.DBConfig,
 	cfgFile string,
 	tableInfoGetter translator.TableInfoGetter,
@@ -21,9 +21,7 @@ func NewSyncerPlugin(
 	sqlMode *string,
 	destDBType string,
 	relayer relay.Relayer,
-	info *loopbacksync.LoopBackSync,
-	enableDispatch bool,
-	enableCausility bool) (dsyncer sync.Syncer, err error) {
+	info *loopbacksync.LoopBackSync) (dsyncer sync.Syncer, err error) {
 	return sync.NewMafkaSyncer(cfg, cfgFile, tableInfoGetter, worker, batchSize, queryHistogramVec, sqlMode,
-		destDBType, relayer, info, enableDispatch, enableCausility)
+		destDBType, relayer, info)
 }

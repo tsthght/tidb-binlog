@@ -31,7 +31,7 @@ type MafkaSyncer struct {
 	*baseSyncer
 }
 
-func NewMafkaSyncer(
+func NewMafkaSyncer (
 	cfg *DBConfig,
 	cfgFile string,
 	tableInfoGetter translator.TableInfoGetter,
@@ -41,9 +41,7 @@ func NewMafkaSyncer(
 	sqlMode *string,
 	destDBType string,
 	relayer relay.Relayer,
-	info *loopbacksync.LoopBackSync,
-	enableDispatch bool,
-	enableCausility bool) (dsyncer Syncer, err error) {
+	info *loopbacksync.LoopBackSync) (dsyncer Syncer, err error) {
 	if cfgFile == "" {
 		return nil, errors.New("config file name is empty")
 	}
