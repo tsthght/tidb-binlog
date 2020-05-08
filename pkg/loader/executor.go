@@ -310,7 +310,7 @@ func (e *executor) singleExecRetry(ctx context.Context, allDMLs []*DML, safeMode
 
 			if tryRefreshTableErr(execErr) && e.refreshTableInfo != nil {
 				log.Info("try refresh table info")
-				name2info := make(map[string]*tableInfo)
+				name2info := make(map[string]*TableInfo)
 				for _, dml := range dmls {
 					name := dml.TableName()
 					info, ok := name2info[name]
