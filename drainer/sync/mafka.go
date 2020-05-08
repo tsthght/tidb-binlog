@@ -106,11 +106,13 @@ func (ms *MafkaSyncer) Sync(item *Item) error {
 			normal, args := dml.Sql()
 			sql, err := GenSQL(normal, args, true, time.Local)
 			if err != nil {
+				log.Info("genSQL error", zap.Error(err))
 				return err
 			}
 			m := NewMessage(dml.Database, dml.Table, sql, cts, time.Now().UnixNano()/1000000)
 			data, err := json.Marshal(m)
 			if err != nil {
+				log.Warn("json marshal error", zap.Error(err))
 				return err
 			}
 			log.Info("send to mafka", zap.String("sql", m.Sql), zap.Int64("commit-ts", m.Cts), zap.Int64("applied-ts", m.Ats))
