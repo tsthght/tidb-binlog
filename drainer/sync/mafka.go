@@ -83,7 +83,7 @@ func (ms *MafkaSyncer) Sync(item *Item) error {
 	if txn.DDL != nil {
 		sqls := strings.Split(txn.DDL.SQL, ";")
 		for _, sql := range sqls {
-			m := NewMessage(txn.DDL.Database, txn.DDL.Table, sql, cts, time.Now().Unix())
+			m := NewMessage(txn.DDL.Database, txn.DDL.Table, sql, cts, time.Now().UnixNano()/1000000)
 			if ms.tableInfos.NeedRefreshTableInfo(sql) {
 				ms.tableInfos.RefreshToInfos(txn.DDL.Database, txn.DDL.Table)
 			}
@@ -108,7 +108,7 @@ func (ms *MafkaSyncer) Sync(item *Item) error {
 			if err != nil {
 				return err
 			}
-			m := NewMessage(dml.Database, dml.Table, sql, cts, time.Now().Unix())
+			m := NewMessage(dml.Database, dml.Table, sql, cts, time.Now().UnixNano()/1000000)
 			data, err := json.Marshal(m)
 			if err != nil {
 				return err
@@ -150,7 +150,7 @@ func (ms *MafkaSyncer) Run () {
 			select {
 			case <-checkTick.C:
 				ts := int64(C.GetLatestApplyTime())
-				log.Info("## get success time: %d", zap.Int64("ts", ts))
+				log.Info("## get success time ", zap.Int64("ts", ts))
 				ms.toBeAckCommitTSMu.Lock()
 				var next *list.Element
 				for elem := ms.toBeAckCommitTS.GetDataList().Front(); elem != nil; elem = next {
@@ -165,7 +165,7 @@ func (ms *MafkaSyncer) Run () {
 
 				tss := int64(C.GetLatestSuccessTime())
 				cur := time.Now().Unix()
-				if ms.toBeAckCommitTS.Size() > 0 && cur != 0 && cur - tss > ms.maxWaitThreshold {
+				if ms.toBeAckCommitTS.Size() > 0 && cur != 0 && (cur - tss) > ms.maxWaitThreshold {
 					err := errors.New(fmt.Sprintf("fail to push msg to mafka after %v, check if kafka is up and working", ms.maxWaitThreshold))
 					ms.setErr(err)
 					log.Warn("fail to push msg to mafka, MafkaSyncer exit")
