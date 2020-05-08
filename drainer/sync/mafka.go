@@ -91,7 +91,7 @@ func (ms *MafkaSyncer) Sync(item *Item) error {
 			if err != nil {
 				return err
 			}
-			log.Info("Mafka->DDL", zap.String("message", fmt.Sprintf("%v", m)))
+			log.Info("Mafka->DDL", zap.String("message", fmt.Sprintf("%v", m)), zap.Int64("latency", m.Cts - m.Ats))
 			C.AsyncMessage(C.CString(string(data)), C.long(cts))
 		}
 	} else {
@@ -113,7 +113,7 @@ func (ms *MafkaSyncer) Sync(item *Item) error {
 				log.Warn("json marshal error", zap.Error(err))
 				return err
 			}
-			log.Info("Mafka->DML", zap.String("message", fmt.Sprintf("%v", m)))
+			log.Info("Mafka->DML", zap.String("message", fmt.Sprintf("%v", m)), zap.Int64("latency", m.Cts - m.Ats))
 			C.AsyncMessage(C.CString(string(data)), C.long(cts))
 		}
 	}
