@@ -91,12 +91,10 @@ func (ms *MafkaSyncer) Sync(item *Item) error {
 			if err != nil {
 				return err
 			}
-			log.Info("send to mafka", zap.String("sql", m.Sql), zap.Int64("commit-ts", m.Cts), zap.Int64("applied-ts", m.Ats))
 			C.AsyncMessage(C.CString(string(data)), C.long(cts))
 		}
 	} else {
 		for _, dml := range txn.DMLs {
-			log.Info("###", zap.String("dml", fmt.Sprintf("%v", dml)))
 			i, e := ms.tableInfos.GetFromInfos(dml.Database, dml.Table)
 			if e != nil {
 				return err
@@ -115,7 +113,6 @@ func (ms *MafkaSyncer) Sync(item *Item) error {
 				log.Warn("json marshal error", zap.Error(err))
 				return err
 			}
-			log.Info("send to mafka", zap.String("sql", m.Sql), zap.Int64("commit-ts", m.Cts), zap.Int64("applied-ts", m.Ats))
 			C.AsyncMessage(C.CString(string(data)), C.long(cts))
 		}
 	}
@@ -152,7 +149,6 @@ func (ms *MafkaSyncer) Run () {
 			select {
 			case <-checkTick.C:
 				ts := int64(C.GetLatestApplyTime())
-				log.Info("## get apply time ", zap.Int64("ts", ts))
 				if ts > 0 {
 					ms.toBeAckCommitTSMu.Lock()
 					var next *list.Element
@@ -170,7 +166,6 @@ func (ms *MafkaSyncer) Run () {
 
 				ms.toBeAckCommitTSMu.Lock()
 				tss := int64(C.GetLatestSuccessTime())
-				log.Info("## get success time ", zap.Int64("ts", tss))
 				cur := time.Now().Unix()
 				if ms.toBeAckCommitTS.Size() > 0 && cur != 0 && (cur - tss) > ms.maxWaitThreshold {
 					err := errors.New(fmt.Sprintf("fail to push msg to mafka after %v, check if kafka is up and working", ms.maxWaitThreshold))
