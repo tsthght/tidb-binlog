@@ -91,6 +91,7 @@ func (ms *MafkaSyncer) Sync(item *Item) error {
 			if err != nil {
 				return err
 			}
+			log.Info("Mafka->DDL", zap.String("message", fmt.Sprintf("%v", m)))
 			C.AsyncMessage(C.CString(string(data)), C.long(cts))
 		}
 	} else {
@@ -112,6 +113,7 @@ func (ms *MafkaSyncer) Sync(item *Item) error {
 				log.Warn("json marshal error", zap.Error(err))
 				return err
 			}
+			log.Info("Mafka->DML", zap.String("message", fmt.Sprintf("%v", m)))
 			C.AsyncMessage(C.CString(string(data)), C.long(cts))
 		}
 	}
