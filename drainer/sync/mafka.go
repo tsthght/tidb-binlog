@@ -99,7 +99,6 @@ func (ms *MafkaSyncer) Sync(item *Item) error {
 			if e != nil {
 				return err
 			}
-			log.Info("table info", zap.String("info", fmt.Sprintf("%v", i)))
 			dml.SetTableInfo(i)
 			normal, args := dml.Sql()
 			sql, err := GenSQL(normal, args, true, time.Local)
