@@ -19,6 +19,7 @@ import (
 	"github.com/pingcap/tidb-binlog/drainer/loopbacksync"
 	"github.com/pingcap/tidb-binlog/drainer/relay"
 	"github.com/pingcap/tidb-binlog/drainer/translator"
+	"github.com/pingcap/tidb/store/tikv/oracle"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
 )
@@ -91,7 +92,7 @@ func (ms *MafkaSyncer) Sync(item *Item) error {
 				return err
 			}
 			log.Info("send to mafka", zap.String("sql", m.Sql), zap.Int64("commit-ts", m.Cts), zap.Int64("applied-ts", m.Ats))
-			C.AsyncMessage(C.CString(string(data)), C.long(m.Cts))
+			C.AsyncMessage(C.CString(string(data)), cts)
 		}
 	} else {
 		for _, dml := range txn.DMLs {
@@ -113,7 +114,7 @@ func (ms *MafkaSyncer) Sync(item *Item) error {
 				return err
 			}
 			log.Info("send to mafka", zap.String("sql", m.Sql), zap.Int64("commit-ts", m.Cts), zap.Int64("applied-ts", m.Ats))
-			C.AsyncMessage(C.CString(string(data)), C.long(m.Cts))
+			C.AsyncMessage(C.CString(string(data)), cts)
 		}
 	}
 	ms.toBeAckCommitTSMu.Lock()
@@ -187,7 +188,7 @@ func (ms *MafkaSyncer) Run () {
 }
 
 func (it *Item) GetKey() int64 {
-	return it.Binlog.CommitTs
+	return it.Binlog.GetCommitTs()
 }
 
 type Message struct {
@@ -203,7 +204,7 @@ func NewMessage(db, tb, sql string, cts, ats int64) *Message {
 		database: db,
 		table:    tb,
 		Sql:      sql,
-		Cts:      cts,
+		Cts:      oracle.ExtractPhysical(uint64(cts)),
 		Ats:      ats,
 	}
 }
