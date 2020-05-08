@@ -151,18 +151,22 @@ func (ms *MafkaSyncer) Run () {
 			case <-checkTick.C:
 				ts := int64(C.GetLatestApplyTime())
 				log.Info("## get apply time ", zap.Int64("ts", ts))
-				ms.toBeAckCommitTSMu.Lock()
-				var next *list.Element
-				for elem := ms.toBeAckCommitTS.GetDataList().Front(); elem != nil; elem = next {
-					if elem.Value.(Keyer).GetKey() <= ts {
-						next = elem.Next()
-						ms.success <- elem.Value.(*Item)
-						ms.toBeAckCommitTS.Remove(elem.Value.(Keyer))
-					} else {
-						break
+				if ts > 0 {
+					ms.toBeAckCommitTSMu.Lock()
+					var next *list.Element
+					for elem := ms.toBeAckCommitTS.GetDataList().Front(); elem != nil; elem = next {
+						if elem.Value.(Keyer).GetKey() <= ts {
+							next = elem.Next()
+							ms.success <- elem.Value.(*Item)
+							ms.toBeAckCommitTS.Remove(elem.Value.(Keyer))
+						} else {
+							break
+						}
 					}
+					ms.toBeAckCommitTSMu.Unlock()
 				}
 
+				ms.toBeAckCommitTSMu.Lock()
 				tss := int64(C.GetLatestSuccessTime())
 				log.Info("## get success time ", zap.Int64("ts", tss))
 				cur := time.Now().Unix()
