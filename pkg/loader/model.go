@@ -291,6 +291,10 @@ func (dml *DML) Sql() (sql string, args []interface{}) {
 	return
 }
 
+func (dml *DML) SetTableInfo (info *TableInfo) {
+	dml.info = info
+}
+
 func formatKey(values []interface{}) string {
 	builder := new(strings.Builder)
 	for i, v := range values {
