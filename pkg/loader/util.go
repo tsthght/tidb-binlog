@@ -55,6 +55,10 @@ type indexInfo struct {
 	columns []string
 }
 
+func GetTableInfoExt(db *gosql.DB, schema string, table string) (info *TableInfo, err error) {
+	return getTableInfo(db, schema, table)
+}
+
 // getTableInfo returns information like (non-generated) column names and
 // unique keys about the specified table
 func getTableInfo(db *gosql.DB, schema string, table string) (info *TableInfo, err error) {

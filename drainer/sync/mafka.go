@@ -28,6 +28,7 @@ type MafkaSyncer struct {
 	toBeAckCommitTS *MapList
 	shutdown chan struct{}
 	maxWaitThreshold int64
+	tableInfos *TableInformations
 	*baseSyncer
 }
 
@@ -58,6 +59,13 @@ func NewMafkaSyncer (
 	executor.toBeAckCommitTS = NewMapList()
 	executor.baseSyncer = newBaseSyncer(tableInfoGetter)
 	executor.maxWaitThreshold = int64(C.GetWaitThreshold())
+
+	is, err := NewTableInformations(cfg.Checkpoint.User, cfg.Checkpoint.Password, cfg.Host, cfg.Port)
+	if err != nil {
+		return nil, err
+	}
+	executor.tableInfos = is
+
 	log.Info("New MafkaSyncer success")
 	go executor.Run()
 
@@ -75,6 +83,9 @@ func (ms *MafkaSyncer) Sync(item *Item) error {
 		sqls := strings.Split(txn.DDL.SQL, ";")
 		for _, sql := range sqls {
 			m := NewMessage(txn.DDL.Database, txn.DDL.Table, sql, cts, time.Now().Unix())
+			if ms.tableInfos.NeedRefreshTableInfo(sql) {
+				ms.tableInfos.RefreshToInfos(txn.DDL.Database, txn.DDL.Table)
+			}
 			_, err = json.Marshal(m)
 			if err != nil {
 				return err
@@ -85,6 +96,11 @@ func (ms *MafkaSyncer) Sync(item *Item) error {
 	} else {
 		for _, dml := range txn.DMLs {
 			log.Info("###", zap.String("dml", fmt.Sprintf("%v", dml)))
+			i, e := ms.tableInfos.GetFromInfos(dml.Database, dml.Table)
+			if e != nil {
+				return err
+			}
+			dml.SetTableInfo(i)
 			normal, _ := dml.Sql()
 			log.Info("===", zap.String("sql", normal))
 			m := NewMessage(dml.Database, dml.Table, normal, cts, time.Now().Unix())
