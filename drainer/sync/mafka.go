@@ -86,12 +86,12 @@ func (ms *MafkaSyncer) Sync(item *Item) error {
 			if ms.tableInfos.NeedRefreshTableInfo(sql) {
 				ms.tableInfos.RefreshToInfos(txn.DDL.Database, txn.DDL.Table)
 			}
-			_, err = json.Marshal(m)
+			data, err := json.Marshal(m)
 			if err != nil {
 				return err
 			}
 			log.Info("send to mafka", zap.String("sql", m.Sql), zap.Int64("commit-ts", m.Cts), zap.Int64("applied-ts", m.Ats))
-			//C.AsyncMessage(C.CString(string(data)), C.long(m.Cts))
+			C.AsyncMessage(C.CString(string(data)), C.long(m.Cts))
 		}
 	} else {
 		for _, dml := range txn.DMLs {
@@ -102,36 +102,23 @@ func (ms *MafkaSyncer) Sync(item *Item) error {
 			}
 			log.Info("table info", zap.String("info", fmt.Sprintf("%v", i)))
 			dml.SetTableInfo(i)
-			normal, _ := dml.Sql()
-			log.Info("===", zap.String("sql", normal))
-			m := NewMessage(dml.Database, dml.Table, normal, cts, time.Now().Unix())
-			_, err = json.Marshal(m)
-			if err != nil {
-				return err
-			}
-			data, err := json.Marshal(m)
-			if err != nil {
-				return err
-			}
-			C.AsyncMessage(C.CString(string(data)), C.long(m.Cts))
-			/*
+			normal, args := dml.Sql()
 			sql, err := GenSQL(normal, args, true, time.Local)
 			if err != nil {
 				return err
 			}
 			m := NewMessage(dml.Database, dml.Table, sql, cts, time.Now().Unix())
-			_, err = json.Marshal(m)
+			data, err := json.Marshal(m)
 			if err != nil {
 				return err
 			}
 			log.Info("send to mafka", zap.String("sql", m.Sql), zap.Int64("commit-ts", m.Cts), zap.Int64("applied-ts", m.Ats))
-			//C.AsyncMessage(C.CString(string(data)), C.long(m.Cts))
-			 */
+			C.AsyncMessage(C.CString(string(data)), C.long(m.Cts))
 		}
 	}
-	//ms.toBeAckCommitTSMu.Lock()
-	//ms.toBeAckCommitTS.Push(item)
-	//ms.toBeAckCommitTSMu.Unlock()
+	ms.toBeAckCommitTSMu.Lock()
+	ms.toBeAckCommitTS.Push(item)
+	ms.toBeAckCommitTSMu.Unlock()
 
 	return nil
 }
