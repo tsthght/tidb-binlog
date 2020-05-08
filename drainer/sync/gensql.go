@@ -45,6 +45,12 @@ func GenSQL(normal string, args []interface{}, backslashEscapes bool, loc *time.
 			sql = strconv.AppendInt(sql, int64(v), 10)
 		case int64:
 			sql = strconv.AppendInt(sql, int64(v), 10)
+		case uint:
+			sql = strconv.AppendInt(sql, int64(v), 10)
+		case uint32:
+			sql = strconv.AppendInt(sql, int64(v), 10)
+		case uint64:
+			sql = strconv.AppendInt(sql, int64(v), 10)
 		case float64:
 			sql = strconv.AppendFloat(sql, v, 'g', -1, 64)
 		case bool:
