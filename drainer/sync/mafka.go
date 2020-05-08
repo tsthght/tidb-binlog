@@ -92,7 +92,7 @@ func (ms *MafkaSyncer) Sync(item *Item) error {
 				return err
 			}
 			log.Info("send to mafka", zap.String("sql", m.Sql), zap.Int64("commit-ts", m.Cts), zap.Int64("applied-ts", m.Ats))
-			C.AsyncMessage(C.CString(string(data)), cts)
+			C.AsyncMessage(C.CString(string(data)), C.long(cts))
 		}
 	} else {
 		for _, dml := range txn.DMLs {
@@ -114,7 +114,7 @@ func (ms *MafkaSyncer) Sync(item *Item) error {
 				return err
 			}
 			log.Info("send to mafka", zap.String("sql", m.Sql), zap.Int64("commit-ts", m.Cts), zap.Int64("applied-ts", m.Ats))
-			C.AsyncMessage(C.CString(string(data)), cts)
+			C.AsyncMessage(C.CString(string(data)), C.long(cts))
 		}
 	}
 	ms.toBeAckCommitTSMu.Lock()
@@ -150,6 +150,7 @@ func (ms *MafkaSyncer) Run () {
 			select {
 			case <-checkTick.C:
 				ts := int64(C.GetLatestApplyTime())
+				log.Info("## get success time: %d", zap.Int64("ts", ts))
 				ms.toBeAckCommitTSMu.Lock()
 				var next *list.Element
 				for elem := ms.toBeAckCommitTS.GetDataList().Front(); elem != nil; elem = next {
