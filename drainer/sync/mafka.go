@@ -150,7 +150,7 @@ func (ms *MafkaSyncer) Run () {
 			select {
 			case <-checkTick.C:
 				ts := int64(C.GetLatestApplyTime())
-				log.Info("## get success time ", zap.Int64("ts", ts))
+				log.Info("## get apply time ", zap.Int64("ts", ts))
 				ms.toBeAckCommitTSMu.Lock()
 				var next *list.Element
 				for elem := ms.toBeAckCommitTS.GetDataList().Front(); elem != nil; elem = next {
@@ -164,6 +164,7 @@ func (ms *MafkaSyncer) Run () {
 				}
 
 				tss := int64(C.GetLatestSuccessTime())
+				log.Info("## get success time ", zap.Int64("ts", tss))
 				cur := time.Now().Unix()
 				if ms.toBeAckCommitTS.Size() > 0 && cur != 0 && (cur - tss) > ms.maxWaitThreshold {
 					err := errors.New(fmt.Sprintf("fail to push msg to mafka after %v, check if kafka is up and working", ms.maxWaitThreshold))
