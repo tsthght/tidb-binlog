@@ -155,7 +155,7 @@ func (ms *MafkaSyncer) Run () {
 				if ts > 0 {
 					ms.toBeAckCommitTSMu.Lock()
 					var next *list.Element
-					xx := int64(C.GetLatestSuccessTime())
+					xx := int64(C.GetLatestSuccessTime())/1000000
 					for elem := ms.toBeAckCommitTS.GetDataList().Front(); elem != nil; elem = next {
 						if elem.Value.(Keyer).GetKey() <= ts {
 							next = elem.Next()
@@ -173,7 +173,7 @@ func (ms *MafkaSyncer) Run () {
 				ms.toBeAckCommitTSMu.Lock()
 				tss := int64(C.GetLatestSuccessTime())
 				cur := time.Now().Unix()
-				if ms.toBeAckCommitTS.Size() > 0 && cur != 0 && (cur - tss) > ms.maxWaitThreshold {
+				if ms.toBeAckCommitTS.Size() > 0 && cur != 0 && (cur - tss)/1000000 > ms.maxWaitThreshold {
 					err := errors.New(fmt.Sprintf("fail to push msg to mafka after %v, check if kafka is up and working", ms.maxWaitThreshold))
 					ms.setErr(err)
 					log.Warn("fail to push msg to mafka, MafkaSyncer exit")
