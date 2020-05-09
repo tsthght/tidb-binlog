@@ -155,12 +155,13 @@ func (ms *MafkaSyncer) Run () {
 				if ts > 0 {
 					ms.toBeAckCommitTSMu.Lock()
 					var next *list.Element
+					xx := int64(C.GetLatestSuccessTime())
 					for elem := ms.toBeAckCommitTS.GetDataList().Front(); elem != nil; elem = next {
 						if elem.Value.(Keyer).GetKey() <= ts {
 							next = elem.Next()
 							ms.success <- elem.Value.(*Item)
 							//for test
-							log.Info("ack time", zap.Int64("diff", time.Now().UnixNano()/1000000 - elem.Value.(*Item).AppliedTS))
+							log.Info("ack time", zap.Int64("diff", xx - elem.Value.(*Item).AppliedTS))
 							ms.toBeAckCommitTS.Remove(elem.Value.(Keyer))
 						} else {
 							break
