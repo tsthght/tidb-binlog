@@ -114,7 +114,7 @@ func (ms *MafkaSyncer) Sync(item *Item) error {
 				return err
 			}
 			// for test
-			item.AppliedTS = time.Now().UnixNano()/1000000
+			item.AppliedTS = time.Now().Unix()
 			log.Info("Mafka->DML", zap.String("message", fmt.Sprintf("%v", m)), zap.Int64("latency", m.Ats - m.Cts))
 			C.AsyncMessage(C.CString(string(data)), C.long(cts))
 		}
@@ -153,15 +153,15 @@ func (ms *MafkaSyncer) Run () {
 			case <-checkTick.C:
 				ts := int64(C.GetLatestApplyTime())
 				if ts > 0 {
+					xx := int64(C.GetLatestSuccessTime())
 					ms.toBeAckCommitTSMu.Lock()
 					var next *list.Element
-					xx := int64(C.GetLatestSuccessTime())/1000000
 					for elem := ms.toBeAckCommitTS.GetDataList().Front(); elem != nil; elem = next {
 						if elem.Value.(Keyer).GetKey() <= ts {
 							next = elem.Next()
 							ms.success <- elem.Value.(*Item)
 							//for test
-							log.Info("ack time", zap.Int64("diff", xx - elem.Value.(*Item).AppliedTS))
+							log.Info("ack time", zap.Int64("diff", (xx - elem.Value.(*Item).AppliedTS)))
 							ms.toBeAckCommitTS.Remove(elem.Value.(Keyer))
 						} else {
 							break
@@ -173,7 +173,7 @@ func (ms *MafkaSyncer) Run () {
 				ms.toBeAckCommitTSMu.Lock()
 				tss := int64(C.GetLatestSuccessTime())
 				cur := time.Now().Unix()
-				if ms.toBeAckCommitTS.Size() > 0 && cur != 0 && (cur - tss)/1000000 > ms.maxWaitThreshold {
+				if ms.toBeAckCommitTS.Size() > 0 && cur != 0 && (cur - tss) > ms.maxWaitThreshold {
 					err := errors.New(fmt.Sprintf("fail to push msg to mafka after %v, check if kafka is up and working", ms.maxWaitThreshold))
 					ms.setErr(err)
 					log.Warn("fail to push msg to mafka, MafkaSyncer exit")
