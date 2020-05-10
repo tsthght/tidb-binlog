@@ -113,8 +113,6 @@ func (ms *MafkaSyncer) Sync(item *Item) error {
 				log.Warn("json marshal error", zap.Error(err))
 				return err
 			}
-			// for test
-			item.AppliedTS = time.Now().Unix()
 			log.Info("Mafka->DML", zap.String("message", fmt.Sprintf("%v", m)), zap.Int64("latency", m.Ats - m.Cts))
 			C.AsyncMessage(C.CString(string(data)), C.long(cts))
 		}
@@ -153,15 +151,12 @@ func (ms *MafkaSyncer) Run () {
 			case <-checkTick.C:
 				ts := int64(C.GetLatestApplyTime())
 				if ts > 0 {
-					xx := int64(C.GetLatestSuccessTime())
 					ms.toBeAckCommitTSMu.Lock()
 					var next *list.Element
 					for elem := ms.toBeAckCommitTS.GetDataList().Front(); elem != nil; elem = next {
 						if elem.Value.(Keyer).GetKey() <= ts {
 							next = elem.Next()
 							ms.success <- elem.Value.(*Item)
-							//for test
-							log.Info("ack time", zap.Int64("diff", (xx - elem.Value.(*Item).AppliedTS)))
 							ms.toBeAckCommitTS.Remove(elem.Value.(Keyer))
 						} else {
 							break
