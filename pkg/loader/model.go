@@ -276,7 +276,7 @@ func (dml *DML) insertSQL() (sql string, args []interface{}) {
 	return
 }
 
-func (dml *DML) Sql() (sql string, args []interface{}) {
+func (dml *DML) sql() (sql string, args []interface{}) {
 	switch dml.Tp {
 	case InsertDMLType:
 		return dml.insertSQL()
@@ -286,6 +286,23 @@ func (dml *DML) Sql() (sql string, args []interface{}) {
 		return dml.deleteSQL()
 	}
 
+	log.Debug("get sql for dml", zap.Reflect("dml", dml), zap.String("sql", sql), zap.Reflect("args", args))
+
+	return
+}
+
+func (dml *DML) SqlWithSafeMode (safeMode int) (sql string, args []interface{})  {
+	switch dml.Tp {
+	case InsertDMLType:
+		if safeMode > 0 {
+			return dml.replaceSQL()
+		}
+		return dml.insertSQL()
+	case UpdateDMLType:
+		return dml.updateSQL()
+	case DeleteDMLType:
+		return dml.deleteSQL()
+	}
 	log.Debug("get sql for dml", zap.Reflect("dml", dml), zap.String("sql", sql), zap.Reflect("args", args))
 
 	return

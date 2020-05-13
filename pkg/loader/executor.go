@@ -171,7 +171,7 @@ func (e *executor) bulkDelete(deletes []*DML) error {
 	argss := make([]interface{}, 0, len(deletes))
 
 	for _, dml := range deletes {
-		sql, args := dml.Sql()
+		sql, args := dml.sql()
 		sqls.WriteString(sql)
 		sqls.WriteByte(';')
 		argss = append(argss, args...)
@@ -369,7 +369,7 @@ func (e *executor) singleExec(dmls []*DML, safeMode bool) error {
 				return errors.Trace(err)
 			}
 		} else {
-			sql, args := dml.Sql()
+			sql, args := dml.sql()
 			_, err := tx.autoRollbackExec(sql, args...)
 			if err != nil {
 				return errors.Trace(err)

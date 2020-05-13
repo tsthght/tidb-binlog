@@ -28,6 +28,7 @@ type MafkaSyncer struct {
 	toBeAckCommitTS *MapList
 	shutdown chan struct{}
 	maxWaitThreshold int64
+	safemode   int
 	tableInfos *TableInformations
 	*baseSyncer
 }
@@ -59,6 +60,9 @@ func NewMafkaSyncer (
 	executor.toBeAckCommitTS = NewMapList()
 	executor.baseSyncer = newBaseSyncer(tableInfoGetter)
 	executor.maxWaitThreshold = int64(C.GetWaitThreshold())
+	executor.safemode = int(C.GetSafeMode())
+
+	log.Info("init syncer args", zap.Int64("maxWaitThreshold", executor.maxWaitThreshold), zap.Int("safemode", executor.safemode))
 
 	is, err := NewTableInformations(cfg.Checkpoint.User, cfg.Checkpoint.Password, cfg.Host, cfg.Port)
 	if err != nil {
@@ -94,7 +98,7 @@ func (ms *MafkaSyncer) Sync(item *Item) error {
 				return err
 			}
 			dml.SetTableInfo(i)
-			normal, args := dml.Sql()
+			normal, args := dml.SqlWithSafeMode(ms.safemode)
 			sql, err := GenSQL(normal, args, true, time.Local)
 			if err != nil {
 				log.Warn("genSQL error", zap.Error(err))
