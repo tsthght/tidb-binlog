@@ -77,6 +77,7 @@ func NewMafkaSyncer (
 }
 
 func (ms *MafkaSyncer) Sync(item *Item) error {
+	return nil
 	txn, err := translator.TiBinlogToTxn(ms.tableInfoGetter, item.Schema, item.Table, item.Binlog, item.PrewriteValue, item.ShouldSkip)
 	if err != nil {
 		return errors.Trace(err)
