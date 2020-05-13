@@ -8,7 +8,6 @@ import "C"
 
 import (
 	"container/list"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"sync"
@@ -80,22 +79,16 @@ func (ms *MafkaSyncer) Sync(item *Item) error {
 	}
 
 	cts := item.Binlog.GetCommitTs()
+	ats := time.Now().UnixNano()
 	if txn.DDL != nil {
 		sqls := strings.Split(txn.DDL.SQL, ";")
-		for _, sql := range sqls {
-			m := NewMessage(txn.DDL.Database, txn.DDL.Table, sql, cts, time.Now().UnixNano()/1000000)
-			if ms.tableInfos.NeedRefreshTableInfo(sql) {
-				ms.tableInfos.RefreshToInfos(txn.DDL.Database, txn.DDL.Table)
-			}
-			data, err := json.Marshal(m)
-			if err != nil {
-				return err
-			}
-			log.Info("Mafka->DDL", zap.String("message", fmt.Sprintf("%v", m)), zap.Int64("latency", m.Cts - m.Ats))
-			C.AsyncMessage(C.CString(string(data)), C.long(cts))
+		for seq, sql := range sqls {
+			log.Info("Mafka->DDL", zap.String("sql", fmt.Sprintf("%v", sql)), zap.Int64("latency", ats - cts),
+				zap.Int64("sequence", int64(seq)))
+			C.AsyncMessage(C.CSring(txn.DDL.Database), C.CString(txn.DDL.Table), C.CString(string(sql)), C.long(cts), C.long(ats), C.long(seq))
 		}
 	} else {
-		for _, dml := range txn.DMLs {
+		for seq, dml := range txn.DMLs {
 			i, e := ms.tableInfos.GetFromInfos(dml.Database, dml.Table)
 			if e != nil {
 				return err
@@ -104,17 +97,12 @@ func (ms *MafkaSyncer) Sync(item *Item) error {
 			normal, args := dml.Sql()
 			sql, err := GenSQL(normal, args, true, time.Local)
 			if err != nil {
-				log.Info("genSQL error", zap.Error(err))
+				log.Warn("genSQL error", zap.Error(err))
 				return err
 			}
-			m := NewMessage(dml.Database, dml.Table, sql, cts, time.Now().UnixNano()/1000000)
-			data, err := json.Marshal(m)
-			if err != nil {
-				log.Warn("json marshal error", zap.Error(err))
-				return err
-			}
-			log.Info("Mafka->DML", zap.String("message", fmt.Sprintf("%v", m)), zap.Int64("latency", m.Ats - m.Cts))
-			C.AsyncMessage(C.CString(string(data)), C.long(cts))
+			log.Info("Mafka->DML", zap.String("sql", fmt.Sprintf("%v", sql)), zap.Int64("latency", ats - cts),
+				zap.Int64("sequence", int64(seq)))
+			C.AsyncMessage(C.CString(dml.Database), C.CString(dml.Table), C.CString(sql), C.long(cts), C.long(ats), C.long(seq))
 		}
 	}
 	ms.toBeAckCommitTSMu.Lock()
@@ -152,14 +140,12 @@ func (ms *MafkaSyncer) Run () {
 			case <-checkTick.C:
 				ts := int64(C.GetLatestApplyTime())
 				if ts > 0 {
-					xx := int64(C.GetLatestSuccessTime())
 					ms.toBeAckCommitTSMu.Lock()
 					var next *list.Element
 					for elem := ms.toBeAckCommitTS.GetDataList().Front(); elem != nil; elem = next {
 						if elem.Value.(Keyer).GetKey() <= ts {
 							next = elem.Next()
 							ms.success <- elem.Value.(*Item)
-							log.Info("ack time", zap.Int64("diff", xx - elem.Value.(*Item).AppliedTS))
 							ms.toBeAckCommitTS.Remove(elem.Value.(Keyer))
 						} else {
 							break
