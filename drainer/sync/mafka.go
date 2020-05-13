@@ -111,7 +111,6 @@ func (ms *MafkaSyncer) Sync(item *Item) error {
 		}
 	}
 	ms.toBeAckCommitTSMu.Lock()
-	item.AppliedTS = time.Now().UnixNano()
 	ms.toBeAckCommitTS.Push(item)
 	ms.toBeAckCommitTSMu.Unlock()
 
