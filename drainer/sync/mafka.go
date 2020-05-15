@@ -137,7 +137,7 @@ func (ms *MafkaSyncer) Run () {
 	go func() {
 		defer wg.Done()
 
-		checkTick := time.NewTicker(time.Second)
+		checkTick := time.NewTicker(200 * time.Millisecond)
 		defer checkTick.Stop()
 		for {
 			select {
