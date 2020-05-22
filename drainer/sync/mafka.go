@@ -50,7 +50,7 @@ func NewMafkaSyncer (
 
 	ret := C.InitProducerOnce(C.CString(cfgFile))
 	if len(C.GoString(ret)) > 0 {
-		return nil, errors.New("init producer error")
+		return nil, errors.New("init producer error: " + C.GoString(ret))
 	}
 
 	time.Sleep(5 * time.Second)
