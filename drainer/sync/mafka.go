@@ -88,6 +88,7 @@ func (ms *MafkaSyncer) Sync(item *Item) error {
 	log.Info("txn", zap.String("txn info", fmt.Sprintf("%v", txn)))
 
 	ms.success <- item
+	log.Info("##### return direct")
 	return nil
 
 	if txn.DDL != nil {
