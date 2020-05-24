@@ -112,7 +112,7 @@ func (ms *MafkaSyncer) Sync(item *Item) error {
 				return nil
 				return err
 			}
-			log.Info("Mafka->DML", zap.String("sql", fmt.Sprintf("%v", sql)), zap.Int64("latency", ats - cts),
+			log.Info("Mafka->DML", zap.String("sql", fmt.Sprintf("%v", dml)), zap.Int64("latency", ats - cts),
 				zap.Int64("sequence", int64(seq)))
 		}
 		ms.success <- item
