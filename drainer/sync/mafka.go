@@ -85,6 +85,7 @@ func (ms *MafkaSyncer) Sync(item *Item) error {
 	tso := item.Binlog.GetCommitTs()
 	cts := oracle.ExtractPhysical(uint64(tso))
 	ats := time.Now().UnixNano()/1000000
+	log.Info("txn", zap.String("txn info", fmt.Sprintf("%v", txn)))
 	if txn.DDL != nil {
 		sqls := strings.Split(txn.DDL.SQL, ";")
 		for seq, sql := range sqls {
