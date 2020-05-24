@@ -67,6 +67,8 @@ func NewMafkaSyncer (
 	if err != nil {
 		return nil, err
 	}
+	log.Info("checkpoint", zap.String("user", cfg.Checkpoint.User), zap.String("pwd", cfg.Checkpoint.Password),
+		zap.String("host", cfg.Checkpoint.Host), zap.Int("port", cfg.Port))
 	executor.tableInfos = is
 
 	log.Info("New MafkaSyncer success")
@@ -102,19 +104,9 @@ func (ms *MafkaSyncer) Sync(item *Item) error {
 		*/
 	} else {
 		for seq, dml := range txn.DMLs {
-			i, e := ms.tableInfos.GetFromInfos(dml.Database, dml.Table)
+			_, e := ms.tableInfos.GetFromInfos(dml.Database, dml.Table)
 			if e != nil {
 				log.Warn("get table info error", zap.Error(e))
-				ms.success <- item
-				log.Info("##### get table info == return direct")
-				return nil
-				return err
-			}
-			dml.SetTableInfo(i)
-			normal, args := dml.SqlWithSafeMode(ms.safemode)
-			sql, err := GenSQL(normal, args, true, time.Local)
-			if err != nil {
-				log.Warn("genSQL error", zap.Error(err))
 				ms.success <- item
 				log.Info("##### get table info == return direct")
 				return nil
