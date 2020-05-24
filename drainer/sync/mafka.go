@@ -102,7 +102,18 @@ func (ms *MafkaSyncer) Sync(item *Item) error {
 		*/
 	} else {
 		for seq, dml := range txn.DMLs {
-			log.Info("Mafka->DML", zap.String("sql", fmt.Sprintf("%v", dml)), zap.Int64("latency", ats - cts),
+			i, e := ms.tableInfos.GetFromInfos(dml.Database, dml.Table)
+			if e != nil {
+				return err
+			}
+			dml.SetTableInfo(i)
+			normal, args := dml.SqlWithSafeMode(ms.safemode)
+			sql, err := GenSQL(normal, args, true, time.Local)
+			if err != nil {
+				log.Warn("genSQL error", zap.Error(err))
+				return err
+			}
+			log.Info("Mafka->DML", zap.String("sql", fmt.Sprintf("%v", sql)), zap.Int64("latency", ats - cts),
 				zap.Int64("sequence", int64(seq)))
 		}
 		ms.success <- item
