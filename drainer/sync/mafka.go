@@ -104,6 +104,10 @@ func (ms *MafkaSyncer) Sync(item *Item) error {
 		for seq, dml := range txn.DMLs {
 			i, e := ms.tableInfos.GetFromInfos(dml.Database, dml.Table)
 			if e != nil {
+				log.Warn("get table info error", zap.Error(e))
+				ms.success <- item
+				log.Info("##### get table info == return direct")
+				return nil
 				return err
 			}
 			dml.SetTableInfo(i)
@@ -111,6 +115,9 @@ func (ms *MafkaSyncer) Sync(item *Item) error {
 			sql, err := GenSQL(normal, args, true, time.Local)
 			if err != nil {
 				log.Warn("genSQL error", zap.Error(err))
+				ms.success <- item
+				log.Info("##### get table info == return direct")
+				return nil
 				return err
 			}
 			log.Info("Mafka->DML", zap.String("sql", fmt.Sprintf("%v", sql)), zap.Int64("latency", ats - cts),
