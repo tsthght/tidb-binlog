@@ -63,7 +63,7 @@ func NewMafkaSyncer (
 
 	log.Info("init syncer args", zap.Int64("maxWaitThreshold", executor.maxWaitThreshold), zap.Int("safemode", executor.safemode))
 
-	is, err := NewTableInformations(cfg.Checkpoint.User, cfg.Checkpoint.Password, cfg.Host, cfg.Port)
+	is, err := NewTableInformations(cfg.Checkpoint.User, cfg.Checkpoint.Password, cfg.Checkpoint.Host, cfg.Checkpoint.Port)
 	if err != nil {
 		return nil, err
 	}
