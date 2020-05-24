@@ -91,6 +91,7 @@ func (ms *MafkaSyncer) Sync(item *Item) error {
 	if txn.DDL != nil {
 		log.Info("Mafka->DDL", zap.String("sql", fmt.Sprintf("%v", txn.DDL.SQL)), zap.Int64("diff(ms)", ats - cts),
 			zap.Int64("tso", cts), zap.Int64("sequence", int64(0)))
+		C.AsyncMessage(C.CString(txn.DDL.Database), C.CString(txn.DDL.Table), C.CString(string(txn.DDL.SQL)), C.long(cts), C.long(ats), C.long(tso), C.long(0))
 		/*
 		sqls := strings.Split(txn.DDL.SQL, ";")
 		for seq, sql := range sqls {
@@ -114,13 +115,9 @@ func (ms *MafkaSyncer) Sync(item *Item) error {
 			}
 			log.Info("Mafka->DML", zap.String("sql", fmt.Sprintf("%v", sql)), zap.Int64("latency", ats - cts),
 				zap.Int64("sequence", int64(seq)))
-			//C.AsyncMessage(C.CString(dml.Database), C.CString(dml.Table), C.CString(sql), C.long(cts), C.long(ats), C.long(tso), C.long(seq))
+			C.AsyncMessage(C.CString(dml.Database), C.CString(dml.Table), C.CString(sql), C.long(cts), C.long(ats), C.long(tso), C.long(seq))
 		}
 	}
-
-	ms.success <- item
-	log.Info("##### DDL return direct")
-	return nil
 
 	ms.toBeAckCommitTSMu.Lock()
 	ms.toBeAckCommitTS.Push(item)
