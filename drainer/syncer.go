@@ -138,7 +138,7 @@ func createDSyncer(cfg *SyncerConfig, schema *Schema, info *loopbacksync.LoopBac
 				}
 			}
 
-			dsyncer, err = newSyncer(cfg.To, cfg.PluginCfgFile, schema, cfg.WorkerCount, cfg.TxnBatch, queryHistogramVec, cfg.StrSQLMode, cfg.DestDBType, relayer, info)
+			dsyncer, err = newSyncer(cfg.To, cfg.PluginCfgFile, schema, cfg.WorkerCount, cfg.TxnBatch, queryHistogramVec, cfg.StrSQLMode, cfg.DestDBType, relayer, info, cfg.EnableDispatch(), cfg.EnableCausality())
 			if err != nil {
 				return nil, errors.Annotate(err, "fail to create plugin dsyncer")
 			}
