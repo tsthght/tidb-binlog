@@ -18,6 +18,7 @@ type SyncerDemo struct {
 func (sd *SyncerDemo) Sync(item *Item) error {
 	//demo
 	log.Info("item", zap.String("%s", fmt.Sprintf("%v", item)))
+	sd.success <- item
 	return nil
 }
 
