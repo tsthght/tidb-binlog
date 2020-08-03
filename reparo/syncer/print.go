@@ -32,6 +32,7 @@ func newPrintSyncer() (*printSyncer, error) {
 }
 
 func (p *printSyncer) Sync(pbBinlog *pb.Binlog, cb func(binlog *pb.Binlog)) error {
+	fmt.Printf("##### begin\n")
 	switch pbBinlog.Tp {
 	case pb.BinlogType_DDL:
 		printDDL(pbBinlog)
@@ -42,10 +43,11 @@ func (p *printSyncer) Sync(pbBinlog *pb.Binlog, cb func(binlog *pb.Binlog)) erro
 		}
 		cb(pbBinlog)
 	default:
+		fmt.Printf("##### end\n")
 		return errors.Errorf("unknown type: %v", pbBinlog.Tp)
 
 	}
-
+	fmt.Printf("##### end\n")
 	return nil
 }
 
