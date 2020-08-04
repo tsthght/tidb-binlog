@@ -81,9 +81,9 @@ func findLoopBackMark(dmls []*loader.DML, info *loopbacksync.LoopBackSync) (bool
 
 func logFilterTx(dmls []*loader.DML) (str string) {
     str = ""
-    str += fmt.Sprintf("#### Tx-Begin event-count: %d ####\n", len(dmls))
+    str += fmt.Sprintf("#### Tx-Start #### event-count: %d ", len(dmls))
     for i, dml := range dmls {
-        str += fmt.Sprint("num: %d dml: %v\n", i, dml)
+        str += fmt.Sprintf("num: %d dml: %v\n", i, dml)
     }
     str += "#### Tx-End ####\n"
     return str
