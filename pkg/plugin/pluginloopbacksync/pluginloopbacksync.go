@@ -83,7 +83,7 @@ func logFilterTx(dmls []*loader.DML) (str string) {
     str = ""
     str += fmt.Sprintf("#### Tx-Start #### event-count: %d ", len(dmls))
     for i, dml := range dmls {
-        str += fmt.Sprintf("num: %d dml: %v\n", i, dml)
+        str += fmt.Sprintf("num: %d dml: %v", i + 1, dml)
     }
     str += "#### Tx-End ####\n"
     return str
