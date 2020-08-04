@@ -113,20 +113,45 @@ func (p Plugin) LoaderDestroy(db *gosql.DB, info *loopbacksync.LoopBackSync) err
 // ExtendTxn insert an updating mark table statement into the transaction.
 func (p Plugin) ExtendTxn(tx *loader.Tx, info *loopbacksync.LoopBackSync) error {
     if tx == nil || info == nil{
+        if tx == nil {
+            log.Error("tx is nil")
+        }
+        if info == nil {
+            log.Error("info is nil")
+        }
         return nil
     }
     /* update mark table to avoid loopback sync */
     sql := fmt.Sprintf("update %s set %s=%s+1 where %s=? limit 1;", info.MarkTableName, Val, Val, ID)
-    _, err := tx.Exec(sql, addIndex(info))
+    rs, err := tx.Exec(sql, addIndex(info))
     if err != nil {
         rerr := tx.Rollback()
         if rerr != nil {
             log.Error("fail to rollback", zap.Error(rerr))
         }
         log.Error("fail to update mark", zap.Error(err))
-        return rerr
+        return err
     }
-
+    if rs != nil {
+        affectedrows, err := rs.RowsAffected()
+        if err != nil {
+            log.Error("get affected rows failed")
+            rerr := tx.Rollback()
+            if rerr != nil {
+                log.Error("fail to rollback", zap.Error(rerr))
+            }
+            return errors.New("get affected rows failed")
+        } else {
+            if affectedrows == 0 {
+                log.Error("affected rows is zero")
+                rerr := tx.Rollback()
+                if rerr != nil {
+                    log.Error("fail to rollback", zap.Error(rerr))
+                }
+                return errors.New("affected rows is zero")
+            }
+        }
+    }
     return nil
 }
 
