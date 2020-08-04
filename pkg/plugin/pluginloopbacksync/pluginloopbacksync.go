@@ -123,8 +123,10 @@ func (p Plugin) ExtendTxn(tx *loader.Tx, info *loopbacksync.LoopBackSync) error 
     }
     /* update mark table to avoid loopback sync */
     sql := fmt.Sprintf("update %s set %s=%s+1 where %s=? limit 1;", info.MarkTableName, Val, Val, ID)
+    tx.IsAddProtocolTable = true
     rs, err := tx.Exec(sql, addIndex(info))
     if err != nil {
+        tx.IsAddProtocolTable = false
         rerr := tx.Rollback()
         if rerr != nil {
             log.Error("fail to rollback", zap.Error(rerr))
@@ -136,6 +138,7 @@ func (p Plugin) ExtendTxn(tx *loader.Tx, info *loopbacksync.LoopBackSync) error 
         affectedrows, err := rs.RowsAffected()
         if err != nil {
             log.Error("get affected rows failed")
+            tx.IsAddProtocolTable = false
             rerr := tx.Rollback()
             if rerr != nil {
                 log.Error("fail to rollback", zap.Error(rerr))
@@ -144,6 +147,7 @@ func (p Plugin) ExtendTxn(tx *loader.Tx, info *loopbacksync.LoopBackSync) error 
         } else {
             if affectedrows == 0 {
                 log.Error("affected rows is zero")
+                tx.IsAddProtocolTable = false
                 rerr := tx.Rollback()
                 if rerr != nil {
                     log.Error("fail to rollback", zap.Error(rerr))

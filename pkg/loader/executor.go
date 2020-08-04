@@ -92,6 +92,7 @@ func (e *executor) execTableBatchRetry(ctx context.Context, dmls []*DML, retryNu
 type Tx struct {
 	*gosql.Tx
 	queryHistogramVec *prometheus.HistogramVec
+	IsAddProtocolTable bool
 }
 
 // wrap of sql.Tx.Exec()
@@ -130,7 +131,7 @@ func (tx *Tx) commit() error {
 	if tx.queryHistogramVec != nil {
 		tx.queryHistogramVec.WithLabelValues("commit").Observe(time.Since(start).Seconds())
 	}
-
+	log.Info("#### commit ", zap.Bool("has protocol table", tx.IsAddProtocolTable))
 	return errors.Trace(err)
 }
 
