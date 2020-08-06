@@ -138,6 +138,7 @@ func NewMysqlSyncer(
 		}
 		s.syncto = (cur.Unix() * 1000) << 18
 	}
+	log.Info("", zap.String("syncto", syncto), zap.Int64("syncto", s.syncto))
 
 	go s.run()
 
