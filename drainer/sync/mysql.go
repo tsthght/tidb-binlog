@@ -15,10 +15,13 @@ package sync
 
 import (
 	"database/sql"
+	"os"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/pingcap/tidb-binlog/drainer/loopbacksync"
+	"go.uber.org/zap"
 
 	"github.com/pingcap/errors"
 	"github.com/pingcap/log"
@@ -36,6 +39,7 @@ type MysqlSyncer struct {
 	loader  loader.Loader
 	relayer relay.Relayer
 
+	syncto  int64
 	*baseSyncer
 }
 
@@ -87,6 +91,7 @@ func NewMysqlSyncer(
 	destDBType string,
 	relayer relay.Relayer,
 	info *loopbacksync.LoopBackSync,
+	syncto string,
 ) (*MysqlSyncer, error) {
 	db, err := createDB(cfg.User, cfg.Password, cfg.Host, cfg.Port, sqlMode)
 	if err != nil {
@@ -121,6 +126,17 @@ func NewMysqlSyncer(
 		loader:     loader,
 		relayer:    relayer,
 		baseSyncer: newBaseSyncer(tableInfoGetter),
+	}
+
+	if len(syncto) == 0 {
+		s.syncto = 0
+	} else {
+		loc, _ := time.LoadLocation("Local")
+		cur, err := time.ParseInLocation("2006-01-02 15:04:05", syncto, loc)
+		if err != nil {
+			return nil, errors.Trace(err)
+		}
+		s.syncto = (cur.Unix() * 1000) << 18
 	}
 
 	go s.run()
@@ -158,6 +174,13 @@ func (m *MysqlSyncer) SetSafeMode(mode bool) {
 
 // Sync implements Syncer interface
 func (m *MysqlSyncer) Sync(item *Item) error {
+	if m.syncto > 0 && item.Binlog.CommitTs > m.syncto {
+		time.Sleep(5 * time.Second)
+		log.Info("binlog's commit tso >= syncto tso, drainer exit", zap.Int64("cts", item.Binlog.CommitTs),
+			zap.Int64("syncto", m.syncto))
+		os.Exit(0)
+	}
+
 	// `relayer` is nil if relay log is disabled.
 	if m.relayer != nil {
 		pos, err := m.relayer.WriteBinlog(item.Schema, item.Table, item.Binlog, item.PrewriteValue)
