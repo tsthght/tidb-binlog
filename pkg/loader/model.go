@@ -314,7 +314,9 @@ func getKey(names []string, values map[string]interface{}) string {
 		if v == nil {
 			continue
 		}
-
+		if strings.EqualFold(name, "delete_time_id")  {
+			continue
+		}
 		fmt.Fprintf(builder, "(%s: %v)", name, v)
 	}
 
