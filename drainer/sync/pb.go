@@ -19,6 +19,7 @@ import (
 	"github.com/pingcap/tidb-binlog/pkg/binlogfile"
 	pb "github.com/pingcap/tidb-binlog/proto/binlog"
 	tb "github.com/pingcap/tipb/go-binlog"
+	"go.uber.org/zap"
 )
 
 var _ Syncer = &pbSyncer{}
@@ -45,6 +46,7 @@ func NewPBSyncer(dir string, tableInfoGetter translator.TableInfoGetter) (*pbSyn
 }
 
 func (p *pbSyncer) Sync(item *Item) error {
+	log.Info("####", zap.String("ip", string(item.Binlog.Ip)))
 	pbBinlog, err := translator.TiBinlogToPbBinlog(p.tableInfoGetter, item.Schema, item.Table, item.Binlog, item.PrewriteValue)
 	if err != nil {
 		return errors.Trace(err)
