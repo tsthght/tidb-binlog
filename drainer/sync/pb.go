@@ -49,14 +49,13 @@ func NewPBSyncer(dir string, tableInfoGetter translator.TableInfoGetter) (*pbSyn
 }
 
 func (p *pbSyncer) Sync(item *Item) error {
-	log.Info("#### Start", zap.String("ip", string(item.Binlog.Ip)))
-	log.Info("####", zap.String("binlog", fmt.Sprintf("%v", item.Binlog)))
-	log.Info("#### End")
 	pbBinlog, err := translator.TiBinlogToPbBinlog(p.tableInfoGetter, item.Schema, item.Table, item.Binlog, item.PrewriteValue)
 	if err != nil {
 		return errors.Trace(err)
 	}
-
+	log.Info("#### Start", zap.String("ip", string(item.Binlog.Ip)))
+	log.Info("####", zap.String("binlog", fmt.Sprintf("%v", pbBinlog)))
+	log.Info("#### End")
 	err = p.saveBinlog(pbBinlog)
 	if err != nil {
 		return errors.Trace(err)
