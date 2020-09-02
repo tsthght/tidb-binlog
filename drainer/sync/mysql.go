@@ -18,11 +18,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/pingcap/tidb-binlog/drainer/loopbacksync"
-	"go.uber.org/zap"
-
 	"github.com/pingcap/errors"
 	"github.com/pingcap/log"
+	"github.com/pingcap/tidb-binlog/drainer/loopbacksync"
 	"github.com/pingcap/tidb-binlog/drainer/relay"
 	"github.com/pingcap/tidb-binlog/drainer/translator"
 	"github.com/pingcap/tidb-binlog/pkg/loader"
@@ -159,7 +157,6 @@ func (m *MysqlSyncer) SetSafeMode(mode bool) {
 
 // Sync implements Syncer interface
 func (m *MysqlSyncer) Sync(item *Item) error {
-	log.Info("#####", zap.String("ip", item.Binlog.Ip))
 	// `relayer` is nil if relay log is disabled.
 	if m.relayer != nil {
 		pos, err := m.relayer.WriteBinlog(item.Schema, item.Table, item.Binlog, item.PrewriteValue)

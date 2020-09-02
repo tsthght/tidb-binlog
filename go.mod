@@ -1,5 +1,7 @@
 module github.com/pingcap/tidb-binlog
 
+go 1.14
+
 require (
 	github.com/BurntSushi/toml v0.3.1
 	github.com/DATA-DOG/go-sqlmock v1.3.0
@@ -48,9 +50,3 @@ require (
 	google.golang.org/grpc v1.17.0
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 )
-
-go 1.13
-
-replace github.com/pingcap/tipb v0.0.0-20191120045257-1b9900292ab6 => github.com/WangXiangUSTC/tipb v0.0.0-20200902082356-d5f038b2ea59
-
-replace github.com/pingcap/tidb v1.1.0-beta.0.20191120070053-5a7ecfeb94fd => github.com/tsthght/tidb feature/ip
