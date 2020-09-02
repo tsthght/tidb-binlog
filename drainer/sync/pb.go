@@ -14,6 +14,8 @@
 package sync
 
 import (
+	"fmt"
+
 	"github.com/pingcap/errors"
 	"github.com/pingcap/log"
 	"github.com/pingcap/tidb-binlog/drainer/translator"
@@ -47,7 +49,9 @@ func NewPBSyncer(dir string, tableInfoGetter translator.TableInfoGetter) (*pbSyn
 }
 
 func (p *pbSyncer) Sync(item *Item) error {
-	log.Info("####", zap.String("ip", string(item.Binlog.Ip)))
+	log.Info("#### Start", zap.String("ip", string(item.Binlog.Ip)))
+	log.Info("####", zap.String("binlog", fmt.Sprintf("%v", item.Binlog)))
+	log.Info("#### End")
 	pbBinlog, err := translator.TiBinlogToPbBinlog(p.tableInfoGetter, item.Schema, item.Table, item.Binlog, item.PrewriteValue)
 	if err != nil {
 		return errors.Trace(err)
