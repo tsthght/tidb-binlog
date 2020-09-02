@@ -52,3 +52,5 @@ require (
 go 1.13
 
 replace github.com/pingcap/tipb v0.0.0-20191120045257-1b9900292ab6 => github.com/WangXiangUSTC/tipb v0.0.0-20200902082356-d5f038b2ea59
+
+replace github.com/pingcap/tidb v1.1.0-beta.0.20191120070053-5a7ecfeb94fd => github.com/tsthght/tidb feature/ip
