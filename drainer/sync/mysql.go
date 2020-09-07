@@ -15,6 +15,7 @@ package sync
 
 import (
 	"database/sql"
+	"fmt"
 	"strings"
 	"sync"
 
@@ -25,6 +26,7 @@ import (
 	"github.com/pingcap/tidb-binlog/drainer/translator"
 	"github.com/pingcap/tidb-binlog/pkg/loader"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.uber.org/zap"
 )
 
 var _ Syncer = &MysqlSyncer{}
@@ -170,6 +172,11 @@ func (m *MysqlSyncer) Sync(item *Item) error {
 	if err != nil {
 		return errors.Trace(err)
 	}
+
+	if (len(item.Binlog.Ip) == 0) {
+		log.Fatal("IP is not in binlog!", zap.String("commit-ts", fmt.Sprintf("%v", item.Binlog.CommitTs)), zap.Strings("txn", txn.GetSQL()))
+	}
+
 	txn.Metadata = item
 
 	select {

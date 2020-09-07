@@ -4,13 +4,15 @@ import (
     "database/sql"
     gosql "database/sql"
     "fmt"
+    "strings"
+    "sync/atomic"
+
     "github.com/pingcap/errors"
     "github.com/pingcap/log"
     "github.com/pingcap/tidb-binlog/drainer/loopbacksync"
+    "github.com/pingcap/tidb-binlog/drainer/sync"
     "github.com/pingcap/tidb-binlog/pkg/loader"
     "go.uber.org/zap"
-    "strings"
-    "sync/atomic"
 )
 
 // Plugin for loopbacksync
@@ -179,6 +181,13 @@ func (p Plugin) FilterTxn(txn *loader.Txn, info *loopbacksync.LoopBackSync) (*lo
     }
     if find{
         return nil, nil
+    }
+
+    for _, ip := range info.MigrationIPs {
+        if strings.EqualFold(txn.Ip, ip) {
+            log.Fatal("Cyclic replication may occur", zap.String("commit-ts", fmt.Sprintf("%v", txn.Metadata.(*sync.Item).Binlog.CommitTs)),
+                zap.String("txn ip", ip), zap.Strings("migration ips", info.MigrationIPs), zap.Strings("txn", txn.GetSQL()))
+        }
     }
 
     /* set Database name empty */

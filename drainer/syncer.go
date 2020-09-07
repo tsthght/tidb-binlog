@@ -79,7 +79,7 @@ func NewSyncer(cp checkpoint.CheckPoint, cfg *SyncerConfig, jobs []*model.Job) (
 	}
 	syncer.filter = filter.NewFilter(ignoreDBs, cfg.IgnoreTables, cfg.DoDBs, cfg.DoTables)
 	syncer.loopbackSync = loopbacksync.NewLoopBackSyncInfo(cfg.ChannelID, cfg.LoopbackControl, cfg.SyncDDL, cfg.PluginPath,
-		strings.Split(cfg.PluginNames, ","), cfg.SupportPlugin, cfg.MarkDBName, cfg.MarkTableName)
+		strings.Split(cfg.PluginNames, ","), strings.Split(cfg.MigrationIPs, ","), cfg.SupportPlugin, cfg.MarkDBName, cfg.MarkTableName)
 	if syncer.loopbackSync.SupportPlugin {
 		log.Info("Begin to Load syncer-plugins.")
 		for _, name := range syncer.loopbackSync.PluginNames {
@@ -286,7 +286,7 @@ func (s *Syncer) savePoint(ts, slaveTS int64) {
 		log.Error("save ts is less than checkpoint ts %d", zap.Int64("save ts", ts), zap.Int64("checkpoint ts", s.cp.TS()))
 	}
 
-	log.Info("write save point", zap.Int64("ts", ts), zap.String("time", time.Unix(ts>>18/1000, 0).String()),
+	log.Info("write save point [txn/ip]", zap.Int64("ts", ts), zap.String("time", time.Unix(ts>>18/1000, 0).String()),
 		zap.Int64("diff(ms)", time.Now().Sub(time.Unix(ts>>18/1000, 0)).Milliseconds()))
 	err := s.cp.Save(ts, slaveTS, false)
 	if err != nil {

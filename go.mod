@@ -50,3 +50,5 @@ require (
 	google.golang.org/grpc v1.17.0
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 )
+
+replace github.com/pingcap/tipb v0.0.0-20191120045257-1b9900292ab6 => github.com/WangXiangUSTC/tipb IP_3.0.11

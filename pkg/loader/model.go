@@ -67,6 +67,8 @@ type Txn struct {
 	// This field is used to hold arbitrary data you wish to include so it
 	// will be available when receiving on the Successes channel
 	Metadata interface{}
+
+	Ip string
 }
 
 // AppendDML append a dml
@@ -96,6 +98,18 @@ func (t *Txn) String() string {
 
 func (t *Txn) isDDL() bool {
 	return t.DDL != nil
+}
+
+func (t *Txn) GetSQL() (sql []string) {
+	if t.isDDL() {
+		sql = append(sql, t.DDL.SQL)
+		return
+	}
+	for _, dml := range t.DMLs {
+		s, a := dml.sql()
+		sql = append(sql, fmt.Sprintf("sql=%v, args=%v", s, a))
+	}
+	return
 }
 
 func (dml *DML) primaryKeys() []string {

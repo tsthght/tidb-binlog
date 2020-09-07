@@ -83,6 +83,7 @@ type SyncerConfig struct {
 	SupportPlugin     bool               `toml:"support-plugin" json:"support-plugin"`
 	MarkDBName        string             `toml:"mark-db-name" json:"mark-db-name"`
 	MarkTableName     string             `toml:"mark-table-name" json:"mark-table-name"`
+	MigrationIPs      string             `toml:"migration-ips" json:"migration-ips"`
 }
 
 // RelayConfig is the Relay log's configuration.
@@ -166,6 +167,7 @@ func NewConfig() *Config {
 	fs.BoolVar(&cfg.SyncerCfg.SupportPlugin, "support-plugin", false, "Whether plugin is supported,default: false")
 	fs.StringVar(&cfg.SyncerCfg.MarkDBName, "mark-db-name", "rel", "mark database's name")
 	fs.StringVar(&cfg.SyncerCfg.MarkTableName, "mark-table-name", "_drainer_repl_mark", "mark table's name")
+	fs.StringVar(&cfg.SyncerCfg.MigrationIPs, "migration-ips", "", "The ips of the migration")
 
 	return cfg
 }
