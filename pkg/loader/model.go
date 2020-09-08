@@ -112,6 +112,11 @@ func (t *Txn) GetSQL() (sql []string) {
 	return
 }
 
+func (dml *DML) GetSQL() string {
+	s, a := dml.sql()
+	return fmt.Sprintf("sql=%s, args=%v", s, a)
+}
+
 func (dml *DML) primaryKeys() []string {
 	if dml.info.primaryKey == nil {
 		return nil
