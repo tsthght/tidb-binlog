@@ -242,7 +242,9 @@ func (dml *DML) whereValues(names []string) (values []interface{}) {
 
 func (dml *DML) whereSlice() (colNames []string, args []interface{}) {
 	// Try to use unique key values when available
+	log.Warn("before for")
 	for _, index := range dml.info.uniqueKeys {
+		log.Warn("index", zap.Strings("columns", index.columns), zap.String("name", index.name))
 		values := dml.whereValues(index.columns)
 		notAnyNil := true
 		for i := 0; i < len(values); i++ {
@@ -255,7 +257,7 @@ func (dml *DML) whereSlice() (colNames []string, args []interface{}) {
 			return index.columns, values
 		}
 	}
-
+	log.Warn("after for")
 	// Fallback to use all columns
 	names := dml.columnNames()
 	return names, dml.whereValues(names)
