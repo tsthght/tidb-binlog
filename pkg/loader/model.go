@@ -114,7 +114,7 @@ func (t *Txn) GetSQL() (sql []string) {
 }
 
 func (dml *DML) GetSQL() string {
-	log.Warn("dml GetSQL")
+	log.Warn("dml GetSQL", zap.String("dml info", fmt.Sprintf("%v", dml.info)))
 	s, a := dml.sql()
 	return fmt.Sprintf("sql=%s, args=%v", s, a)
 }
