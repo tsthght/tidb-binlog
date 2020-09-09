@@ -174,7 +174,7 @@ func (m *MysqlSyncer) Sync(item *Item) error {
 	}
 
 	if (len(item.Binlog.Ip) == 0) {
-		log.Fatal("IP is not in binlog!", zap.String("commit-ts", fmt.Sprintf("%v", item.Binlog.CommitTs)), zap.Strings("txn", txn.GetSQL()))
+		log.Fatal("IP is not in binlog!", zap.String("commit-ts", fmt.Sprintf("%v", item.Binlog.CommitTs)), zap.String("txn", fmt.Sprintf("%v", txn)))
 	}
 
 	txn.Metadata = item
