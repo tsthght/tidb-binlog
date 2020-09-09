@@ -101,6 +101,7 @@ func (t *Txn) isDDL() bool {
 }
 
 func (t *Txn) GetSQL() (sql []string) {
+	log.Warn("Txn GetSQL")
 	if t.isDDL() {
 		sql = append(sql, t.DDL.SQL)
 		return
@@ -113,6 +114,7 @@ func (t *Txn) GetSQL() (sql []string) {
 }
 
 func (dml *DML) GetSQL() string {
+	log.Warn("dml GetSQL")
 	s, a := dml.sql()
 	return fmt.Sprintf("sql=%s, args=%v", s, a)
 }
