@@ -79,7 +79,8 @@ func NewSyncer(cp checkpoint.CheckPoint, cfg *SyncerConfig, jobs []*model.Job) (
 	}
 	syncer.filter = filter.NewFilter(ignoreDBs, cfg.IgnoreTables, cfg.DoDBs, cfg.DoTables)
 	syncer.loopbackSync = loopbacksync.NewLoopBackSyncInfo(cfg.ChannelID, cfg.LoopbackControl, cfg.SyncDDL, cfg.PluginPath,
-		strings.Split(cfg.PluginNames, ","), strings.Split(cfg.MigrationIPs, ","), cfg.SupportPlugin, cfg.MarkDBName, cfg.MarkTableName)
+		strings.Split(cfg.PluginNames, ","), strings.Split(cfg.MigrationIPs, ","), cfg.SupportPlugin, cfg.MarkDBName, cfg.MarkTableName,
+		cfg.NotFilterProtocolTable)
 	if syncer.loopbackSync.SupportPlugin {
 		log.Info("Begin to Load syncer-plugins.")
 		for _, name := range syncer.loopbackSync.PluginNames {

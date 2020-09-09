@@ -167,6 +167,14 @@ func (p Plugin) FilterTxn(txn *loader.Txn, info *loopbacksync.LoopBackSync) (*lo
         return nil, nil
     }
 
+    if info.NotFilterProtocolTable {
+        /* set Database name empty */
+        for _, v := range txn.DMLs {
+            v.Database = ""
+        }
+        return txn, nil
+    }
+
     /* skip ddl */
     if txn.DDL != nil {
         log.Info("skip DDL by FilterTxn plugin.", zap.String("sql", txn.DDL.SQL))

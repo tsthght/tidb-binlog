@@ -52,10 +52,11 @@ type LoopBackSync struct {
 	SupportPlugin bool
 	RecordID      int
 	MigrationIPs  []string
+	NotFilterProtocolTable    bool
 }
 
 //NewLoopBackSyncInfo return LoopBackSyncInfo objec
-func NewLoopBackSyncInfo(ChannelID int64, LoopbackControl, SyncDDL bool, path string, names []string, ips []string, SupportPlug bool, mdbname, mtablename string) *LoopBackSync {
+func NewLoopBackSyncInfo(ChannelID int64, LoopbackControl, SyncDDL bool, path string, names []string, ips []string, SupportPlug bool, mdbname, mtablename string, nfpt bool) *LoopBackSync {
 	l := &LoopBackSync{
 		ChannelID:       ChannelID,
 		LoopbackControl: LoopbackControl,
@@ -67,8 +68,10 @@ func NewLoopBackSyncInfo(ChannelID int64, LoopbackControl, SyncDDL bool, path st
 		MarkDBName:      strings.TrimSpace(mdbname),
 		MarkTableName:   strings.TrimSpace(mtablename),
 		MigrationIPs:    ips,
+		NotFilterProtocolTable: nfpt,
 	}
 	log.Info("loopbacksyncinfo", zap.Strings("migrationIPs", ips))
+	log.Info("loopbacksyncinfo", zap.Bool("NotFilterProtocolTable", nfpt))
 	if l.SupportPlugin {
 		l.Hooks = make([]*plugin.EventHooks, 5)
 		l.Hooks[plugin.SyncerFilter] = &plugin.EventHooks{}

@@ -84,6 +84,7 @@ type SyncerConfig struct {
 	MarkDBName        string             `toml:"mark-db-name" json:"mark-db-name"`
 	MarkTableName     string             `toml:"mark-table-name" json:"mark-table-name"`
 	MigrationIPs      string             `toml:"migration-ips" json:"migration-ips"`
+	NotFilterProtocolTable bool          `toml:"not-filter-protocol-table" json:"not-filter-protocol-table"`
 }
 
 // RelayConfig is the Relay log's configuration.
@@ -168,6 +169,8 @@ func NewConfig() *Config {
 	fs.StringVar(&cfg.SyncerCfg.MarkDBName, "mark-db-name", "rel", "mark database's name")
 	fs.StringVar(&cfg.SyncerCfg.MarkTableName, "mark-table-name", "_drainer_repl_mark", "mark table's name")
 	fs.StringVar(&cfg.SyncerCfg.MigrationIPs, "migration-ips", "", "The ips of the migration")
+	fs.BoolVar(&cfg.SyncerCfg.NotFilterProtocolTable, "not filter protocol table", false, "not filter protocol table, default: false")
+
 
 	return cfg
 }
