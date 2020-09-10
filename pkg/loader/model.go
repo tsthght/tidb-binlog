@@ -14,6 +14,7 @@
 package loader
 
 import (
+	"database/sql"
 	"fmt"
 	"sort"
 	"strconv"
@@ -44,7 +45,7 @@ type DML struct {
 	OldValues map[string]interface{}
 	Values    map[string]interface{}
 
-	info *tableInfo
+	info *TableInfo
 }
 
 // DDL holds the ddl info
@@ -100,21 +101,28 @@ func (t *Txn) isDDL() bool {
 	return t.DDL != nil
 }
 
-func (t *Txn) GetSQL() (sql []string) {
+func (t *Txn) GetSQL(db *sql.DB) (sql []string, err error) {
 	if t.isDDL() {
 		sql = append(sql, t.DDL.SQL)
 		return
 	}
 	for _, dml := range t.DMLs {
-		s, a := dml.sql()
-		sql = append(sql, fmt.Sprintf("sql=%v, args=%v", s, a))
+		s, err := dml.GetSQL(db)
+		if err != nil {
+			return nil, err
+		}
+		sql = append(sql, s)
 	}
-	return
+	return sql, nil
 }
 
-func (dml *DML) GetSQL() string {
+func (dml *DML) GetSQL(db *sql.DB) (sql string, err error) {
+	dml.info, err = GetTableInfoExtern(db, dml.Database, dml.Table)
+	if err != nil {
+		return "", err
+	}
 	s, a := dml.sql()
-	return fmt.Sprintf("sql=%s, args=%v", s, a)
+	return fmt.Sprintf("sql=%s, args=%v", s, a), nil
 }
 
 func (dml *DML) primaryKeys() []string {

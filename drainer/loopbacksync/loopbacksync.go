@@ -22,6 +22,8 @@ import (
 	"github.com/pingcap/log"
 	"github.com/pingcap/tidb-binlog/pkg/plugin"
 	"go.uber.org/zap"
+
+	gosql "database/sql"
 )
 
 const (
@@ -53,6 +55,7 @@ type LoopBackSync struct {
 	RecordID      int
 	MigrationIPs  []string
 	NotFilterProtocolTable    bool
+	DB *gosql.DB
 }
 
 //NewLoopBackSyncInfo return LoopBackSyncInfo objec

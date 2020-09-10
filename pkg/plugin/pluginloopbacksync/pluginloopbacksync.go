@@ -84,9 +84,7 @@ func findLoopBackMark(dmls []*loader.DML, info *loopbacksync.LoopBackSync) (bool
 func logFilterTx(dmls []*loader.DML) (str string) {
     str = ""
     str += fmt.Sprintf("#### Tx-Start #### event-count: %d ", len(dmls))
-    for i, dml := range dmls {
-        str += fmt.Sprintf("num: %d dml: %s", i + 1, dml.GetSQL())
-    }
+    str += fmt.Sprintf("%v", dmls)
     str += "#### Tx-End ####\n"
     return str
 }
@@ -193,8 +191,13 @@ func (p Plugin) FilterTxn(txn *loader.Txn, info *loopbacksync.LoopBackSync) (*lo
 
     for _, ip := range info.MigrationIPs {
         if strings.EqualFold(txn.Ip, ip) {
+            sqls, err := txn.GetSQL(info.DB)
+            if err != nil {
+                log.Fatal("Cyclic replication may occur", zap.String("commit-ts", fmt.Sprintf("%v", txn.Metadata.(*sync.Item).Binlog.CommitTs)),
+                    zap.String("txn ip", ip), zap.Strings("migration ips", info.MigrationIPs), zap.String("GetSQL failed", err.Error()))
+            }
             log.Fatal("Cyclic replication may occur", zap.String("commit-ts", fmt.Sprintf("%v", txn.Metadata.(*sync.Item).Binlog.CommitTs)),
-                zap.String("txn ip", ip), zap.Strings("migration ips", info.MigrationIPs), zap.Strings("txn", txn.GetSQL()))
+                zap.String("txn ip", ip), zap.Strings("migration ips", info.MigrationIPs), zap.Strings("txn", sqls))
         }
     }
 

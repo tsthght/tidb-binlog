@@ -205,6 +205,7 @@ func NewLoader(db *gosql.DB, opt ...Option) (Loader, error) {
 		cancel: cancel,
 	}
 
+	s.loopBackSyncInfo.DB = s.db
 	s.loopBackSyncInfo.RecordID = s.workerCount
 	db.SetMaxOpenConns(opts.workerCount)
 	db.SetMaxIdleConns(opts.workerCount)
@@ -330,7 +331,7 @@ func (s *loaderImpl) Close() {
 
 var utilGetTableInfo = getTableInfo
 
-func (s *loaderImpl) refreshTableInfo(schema string, table string) (info *tableInfo, err error) {
+func (s *loaderImpl) refreshTableInfo(schema string, table string) (info *TableInfo, err error) {
 	log.Info("refresh table info", zap.String("schema", schema), zap.String("table", table))
 
 	if len(table) == 0 {
@@ -356,10 +357,10 @@ func (s *loaderImpl) evitTableInfo(schema string, table string) {
 	s.tableInfos.Delete(quoteSchema(schema, table))
 }
 
-func (s *loaderImpl) getTableInfo(schema string, table string) (info *tableInfo, err error) {
+func (s *loaderImpl) getTableInfo(schema string, table string) (info *TableInfo, err error) {
 	v, ok := s.tableInfos.Load(quoteSchema(schema, table))
 	if ok {
-		info = v.(*tableInfo)
+		info = v.(*TableInfo)
 		return
 	}
 
@@ -489,7 +490,7 @@ func (s *loaderImpl) singleExec(executor *executor, dmls []*DML) error {
 	return errors.Trace(err)
 }
 
-func removeOrphanCols(info *tableInfo, dml *DML) {
+func removeOrphanCols(info *TableInfo, dml *DML) {
 	mp := make(map[string]struct{}, len(info.columns))
 	for _, name := range info.columns {
 		mp[name] = struct{}{}
