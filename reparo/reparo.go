@@ -176,6 +176,8 @@ func (r *Reparo) Process() error {
 		binlog, err := pbReader.read()
 		if err != nil {
 			if errors.Cause(err) == io.EOF {
+				ts := atomic.LoadInt64(&r.lastTS)
+				r.savePoint(ts, 0)
 				return nil
 			}
 
