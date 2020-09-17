@@ -178,6 +178,7 @@ func (r *Reparo) Process() error {
 			if errors.Cause(err) == io.EOF {
 				ts := atomic.LoadInt64(&r.lastTS)
 				r.savePoint(ts, 0)
+				time.Sleep(5 * time.Second)
 				return nil
 			}
 
