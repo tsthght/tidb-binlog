@@ -37,6 +37,7 @@ type Reparo struct {
 	filter *filter.Filter
 
 	cp checkpoint.CheckPoint
+	lastSaveTS int64
 	lastTS int64
 }
 
@@ -110,7 +111,7 @@ func New(cfg *Config) (*Reparo, error) {
 func (r *Reparo) handleSuccess() {
 	successes := r.syncer.Successes()
 	lastSaveTime := time.Now()
-	var lastSaveTS int64
+	r.lastTS = 0
 
 	for {
 		if successes == nil {
@@ -129,17 +130,17 @@ func (r *Reparo) handleSuccess() {
 			}
 		}
 		ts := atomic.LoadInt64(&r.lastTS)
-		if ts > lastSaveTS {
+		if ts > r.lastSaveTS {
 			if time.Since(lastSaveTime) > 3*time.Second {
 				r.savePoint(ts, 0)
 				lastSaveTime = time.Now()
-				lastSaveTS = ts
+				r.lastSaveTS = ts
 			}
 		}
 	}
 
 	ts := atomic.LoadInt64(&r.lastTS)
-	if ts > lastSaveTS {
+	if ts > r.lastSaveTS {
 		r.savePoint(ts, 0)
 	}
 	log.Info("reparo 's handleSuccess quit")
@@ -173,8 +174,11 @@ func (r *Reparo) Process() error {
 		binlog, err := pbReader.read()
 		if err != nil {
 			if errors.Cause(err) == io.EOF {
+				time.Sleep(5 * time.Second)
 				ts := atomic.LoadInt64(&r.lastTS)
-				r.savePoint(ts, 0)
+				if ts > r.lastSaveTS {
+					r.savePoint(ts, 0)
+				}
 				time.Sleep(5 * time.Second)
 				return nil
 			}
