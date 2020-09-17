@@ -177,7 +177,7 @@ func (m *MysqlSyncer) SetSafeMode(mode bool) {
 func (m *MysqlSyncer) Sync(item *Item) error {
 	if m.syncto > 0 && item.Binlog.CommitTs > m.syncto {
 		time.Sleep(6 * time.Second)
-		log.Info("binlog's commit tso >= syncto tso, drainer exit", zap.Int64("cts", item.Binlog.CommitTs),
+		log.Info("binlog's commit tso > syncto tso, drainer exit", zap.Int64("cts", item.Binlog.CommitTs),
 			zap.Int64("syncto", m.syncto))
 		close(m.success)
 		log.Info("close success channel")
