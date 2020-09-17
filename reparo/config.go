@@ -63,6 +63,7 @@ type  Config struct {
 
 	CheckPointDB string `toml:"checkpoint-db" json:"checkpoint-db"`
 	CheckPointType string `toml:"checkpoint-type" json:"checkpoint-type"`
+	ClusterID int64 `toml:"cluster-id" json:"cluster-id"`
 
 	configFile   string
 	printVersion bool
@@ -92,6 +93,8 @@ func NewConfig() *Config {
 	fs.BoolVar(&c.SafeMode, "safe-mode", false, "enable safe mode to make syncer reentrant")
 	fs.StringVar(&c.CheckPointDB, "checkpoint-db", "tidb_binlog", "checkpoint 's database")
 	fs.StringVar(&c.CheckPointType, "checkpoint-type", "", "checkpoint 's type")
+	fs.Int64Var(&c.ClusterID, "cluster-id", 0, "cluster id")
+
 
 	return c
 }

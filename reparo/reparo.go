@@ -15,7 +15,6 @@ package reparo
 
 import (
 	"io"
-	"math/rand"
 	"path"
 	"sync/atomic"
 	"time"
@@ -46,10 +45,8 @@ func genCheckPointCfg(cfg *Config) (*checkpoint.Config, error) {
 		return nil, nil
 	}
 
-	rand.Seed(time.Now().Unix())
-	id := rand.Int31n(1000000000)
 	checkpointCfg := &checkpoint.Config{
-		ClusterID:       uint64(id),
+		ClusterID:       uint64(cfg.ClusterID),
 		InitialCommitTS: cfg.StartTSO,
 		CheckPointFile:  path.Join(cfg.Dir, "reparo_savepoint"),
 	}
