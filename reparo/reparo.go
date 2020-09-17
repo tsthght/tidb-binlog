@@ -94,6 +94,13 @@ func New(cfg *Config) (*Reparo, error) {
 	if err != nil {
 		return nil, errors.Trace(err)
 	}
+	if len(cfg.CheckPointType) > 0 {
+		err := cp.Load()
+		if err != nil {
+			return nil, errors.Trace(err)
+		}
+		cfg.StartTSO = cp.TS()
+	}
 
 	return &Reparo{
 		cfg:    cfg,
