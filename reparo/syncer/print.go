@@ -38,11 +38,13 @@ func (p *printSyncer) Sync(pbBinlog *pb.Binlog, cb func(binlog *pb.Binlog)) erro
 	case pb.BinlogType_DDL:
 		printDDL(pbBinlog)
 		cb(pbBinlog)
+		p.success <- &item{pbBinlog, cb}
 	case pb.BinlogType_DML:
 		for _, event := range pbBinlog.GetDmlData().GetEvents() {
 			printEvent(&event)
 		}
 		cb(pbBinlog)
+		p.success <- &item{pbBinlog, cb}
 	default:
 		return errors.Errorf("unknown type: %v", pbBinlog.Tp)
 
