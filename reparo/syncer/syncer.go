@@ -26,6 +26,9 @@ type Syncer interface {
 
 	// Close closes the Syncer
 	Close() error
+
+	// Successes
+	Successes() <-chan *item
 }
 
 // New creates a new executor based on the name.

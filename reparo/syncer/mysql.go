@@ -40,6 +40,8 @@ type mysqlSyncer struct {
 
 	loaderQuit chan struct{}
 	loaderErr  error
+
+	success chan *item
 }
 
 var (
@@ -66,6 +68,7 @@ func newMysqlSyncerFromSQLDB(db *sql.DB, worker int, batchSize int, safemode boo
 
 	loader.SetSafeMode(safemode)
 	syncer := &mysqlSyncer{db: db, loader: loader}
+	syncer.success = make(chan *item, 8)
 	syncer.runLoader()
 
 	return syncer, nil
@@ -74,6 +77,10 @@ func newMysqlSyncerFromSQLDB(db *sql.DB, worker int, batchSize int, safemode boo
 type item struct {
 	binlog *pb.Binlog
 	cb     func(binlog *pb.Binlog)
+}
+
+func (i *item) GetBinlog() *pb.Binlog {
+	return i.binlog
 }
 
 func (m *mysqlSyncer) Sync(pbBinlog *pb.Binlog, cb func(binlog *pb.Binlog)) error {
@@ -110,6 +117,7 @@ func (m *mysqlSyncer) runLoader() {
 		for txn := range m.loader.Successes() {
 			item := txn.Metadata.(*item)
 			item.cb(item.binlog)
+			m.success <- item
 		}
 		log.Info("Successes chan quit")
 		wg.Done()
@@ -125,4 +133,8 @@ func (m *mysqlSyncer) runLoader() {
 		wg.Wait()
 		close(m.loaderQuit)
 	}()
+}
+
+func (m *mysqlSyncer) Successes() <-chan *item {
+	return m.success
 }

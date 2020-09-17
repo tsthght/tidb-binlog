@@ -23,12 +23,14 @@ import (
 	"go.uber.org/zap"
 )
 
-type printSyncer struct{}
+type printSyncer struct{
+	success chan *item
+}
 
-var _ Syncer = &printSyncer{}
+var _ Syncer = &printSyncer{make(chan *item, 8)}
 
 func newPrintSyncer() (*printSyncer, error) {
-	return &printSyncer{}, nil
+	return &printSyncer{make(chan *item, 8)}, nil
 }
 
 func (p *printSyncer) Sync(pbBinlog *pb.Binlog, cb func(binlog *pb.Binlog)) error {
@@ -128,4 +130,8 @@ func printInsertOrDeleteEvent(row [][]byte) error {
 		fmt.Printf("%s(%s): %s\n", col.Name, col.MysqlType, formatValueToString(val, tp))
 	}
 	return nil
+}
+
+func (p *printSyncer) Successes() <-chan *item {
+	return p.success
 }

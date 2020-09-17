@@ -37,7 +37,7 @@ const (
 )
 
 // Config is the main configuration for the retore tool.
-type Config struct {
+type  Config struct {
 	*flag.FlagSet `toml:"-" json:"-"`
 	Dir           string `toml:"data-dir" json:"data-dir"`
 	StartDatetime string `toml:"start-datetime" json:"start-datetime"`
@@ -60,6 +60,9 @@ type Config struct {
 	LogLevel string `toml:"log-level" json:"log-level"`
 
 	SafeMode bool `toml:"safe-mode" json:"safe-mode"`
+
+	CheckPointDB string `toml:"checkpoint-db" json:"checkpoint-db"`
+	CheckPointType string `toml:"checkpoint-type" json:"checkpoint-type"`
 
 	configFile   string
 	printVersion bool
@@ -87,6 +90,9 @@ func NewConfig() *Config {
 	fs.StringVar(&c.configFile, "config", "", "[REQUIRED] path to configuration file")
 	fs.BoolVar(&c.printVersion, "V", false, "print reparo version info")
 	fs.BoolVar(&c.SafeMode, "safe-mode", false, "enable safe mode to make syncer reentrant")
+	fs.StringVar(&c.CheckPointDB, "checkpoint-db", "tidb_binlog", "checkpoint 's database")
+	fs.StringVar(&c.CheckPointType, "checkpoint-type", "", "checkpoint 's type")
+
 	return c
 }
 

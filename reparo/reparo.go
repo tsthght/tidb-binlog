@@ -15,9 +15,14 @@ package reparo
 
 import (
 	"io"
+	"math/rand"
+	"path"
+	"sync/atomic"
+	"time"
 
 	"github.com/pingcap/errors"
 	"github.com/pingcap/log"
+	"github.com/pingcap/tidb-binlog/drainer/checkpoint"
 	"github.com/pingcap/tidb-binlog/pkg/filter"
 	pb "github.com/pingcap/tidb-binlog/proto/binlog"
 	"github.com/pingcap/tidb-binlog/reparo/syncer"
@@ -31,6 +36,41 @@ type Reparo struct {
 	syncer syncer.Syncer
 
 	filter *filter.Filter
+
+	cp checkpoint.CheckPoint
+	lastTS int64
+}
+
+func genCheckPointCfg(cfg *Config) (*checkpoint.Config, error) {
+	if len(cfg.CheckPointType) == 0 {
+		return nil, nil
+	}
+
+	rand.Seed(time.Now().Unix())
+	id := rand.Int31n(1000000000)
+	checkpointCfg := &checkpoint.Config{
+		ClusterID:       uint64(id),
+		InitialCommitTS: cfg.StartTSO,
+		CheckPointFile:  path.Join(cfg.Dir, "savepoint"),
+	}
+
+	checkpointCfg.Schema = cfg.CheckPointDB
+
+	switch cfg.CheckPointType {
+	case "mysql":
+		checkpointCfg.CheckpointType = cfg.CheckPointType
+		checkpointCfg.Db = &checkpoint.DBConfig{
+			Host:     cfg.DestDB.Host,
+			User:     cfg.DestDB.User,
+			Password: cfg.DestDB.Password,
+			Port:     cfg.DestDB.Port,
+		}
+	case "file":
+		checkpointCfg.CheckpointType = cfg.CheckPointType
+	default:
+		return nil, errors.Errorf("unknown checkpoint type: %s", cfg.CheckPointType)
+	}
+	return checkpointCfg, nil
 }
 
 // New creates a Reparo object.
@@ -44,11 +84,72 @@ func New(cfg *Config) (*Reparo, error) {
 
 	filter := filter.NewFilter(cfg.IgnoreDBs, cfg.IgnoreTables, cfg.DoDBs, cfg.DoTables)
 
+	//support checkpoint
+	cpCfg, err := genCheckPointCfg(cfg)
+	if err != nil {
+		return nil, errors.Trace(err)
+	}
+
+	cp, err := checkpoint.NewCheckPoint(cpCfg)
+	if err != nil {
+		return nil, errors.Trace(err)
+	}
+
 	return &Reparo{
 		cfg:    cfg,
 		syncer: syncer,
 		filter: filter,
+		cp:     cp,
 	}, nil
+}
+
+func (r *Reparo) handleSuccess() {
+	successes := r.syncer.Successes()
+	lastSaveTime := time.Now()
+	var lastSaveTS int64
+
+	for {
+		if successes == nil {
+			break
+		}
+
+		select {
+		case item, ok := <-successes:
+			if !ok {
+				successes = nil
+				break
+			}
+			ts := item.GetBinlog().CommitTs
+			if ts > atomic.LoadInt64(&r.lastTS) {
+				atomic.StoreInt64(&r.lastTS, ts)
+			}
+		}
+		ts := atomic.LoadInt64(&r.lastTS)
+		if ts > lastSaveTS {
+			if time.Since(lastSaveTime) > 3*time.Second {
+				r.savePoint(ts, 0)
+				lastSaveTime = time.Now()
+				lastSaveTS = ts
+			}
+		}
+	}
+
+	ts := atomic.LoadInt64(&r.lastTS)
+	if ts > lastSaveTS {
+		r.savePoint(ts, 0)
+	}
+	log.Info("reparo 's handleSuccess quit")
+}
+
+func (r *Reparo) savePoint(ts, slaveTS int64) {
+	if ts < r.cp.TS() {
+		log.Error("save ts is less than checkpoint ts %d", zap.Int64("save ts", ts), zap.Int64("checkpoint ts", r.cp.TS()))
+	}
+	log.Info("write save point for reparo", zap.Int64("ts", ts))
+	err := r.cp.Save(ts, slaveTS)
+	if err != nil {
+		log.Fatal("save checkpoint failed", zap.Int64("ts", ts), zap.Error(err))
+	}
 }
 
 // Process runs the main procedure.
@@ -58,6 +159,11 @@ func (r *Reparo) Process() error {
 		return errors.Annotatef(err, "new reader failed dir: %s", r.cfg.Dir)
 	}
 	defer pbReader.close()
+
+	//support checkpoint
+	go func() {
+		r.handleSuccess()
+	}()
 
 	for {
 		binlog, err := pbReader.read()

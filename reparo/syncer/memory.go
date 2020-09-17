@@ -22,12 +22,13 @@ import (
 // MemSyncer just save the pb.Binlog in memory, for test only
 type MemSyncer struct {
 	binlogs []*pb.Binlog
+	success chan *item
 }
 
-var _ Syncer = &MemSyncer{}
+var _ Syncer = &MemSyncer{nil, make(chan *item, 8)}
 
 func newMemSyncer() (*MemSyncer, error) {
-	return &MemSyncer{}, nil
+	return &MemSyncer{nil, make(chan *item, 8)}, nil
 }
 
 // Sync implement interface of Syncer
@@ -46,4 +47,8 @@ func (m *MemSyncer) Close() error {
 // GetBinlogs return binlogs receive
 func (m *MemSyncer) GetBinlogs() []*pb.Binlog {
 	return m.binlogs
+}
+
+func (m *MemSyncer) Successes() <-chan *item {
+	return m.success
 }
