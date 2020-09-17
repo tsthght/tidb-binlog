@@ -51,7 +51,7 @@ func genCheckPointCfg(cfg *Config) (*checkpoint.Config, error) {
 	checkpointCfg := &checkpoint.Config{
 		ClusterID:       uint64(id),
 		InitialCommitTS: cfg.StartTSO,
-		CheckPointFile:  path.Join(cfg.Dir, "savepoint"),
+		CheckPointFile:  path.Join(cfg.Dir, "reparo_savepoint"),
 	}
 
 	checkpointCfg.Schema = cfg.CheckPointDB
