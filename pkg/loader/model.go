@@ -107,6 +107,9 @@ func (t *Txn) GetSQL(db *sql.DB) (sql []string, err error) {
 		return
 	}
 	for _, dml := range t.DMLs {
+		if len(dml.Database) != 0 {
+			dml.Database = ""
+		}
 		s, err := dml.GetSQL(db)
 		if err != nil {
 			return nil, err
