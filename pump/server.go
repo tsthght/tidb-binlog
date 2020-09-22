@@ -474,6 +474,8 @@ func (s *Server) writeFakeBinlog() (*pb.Binlog, error) {
 		return nil, errors.Annotate(err, "gennerate fake binlog err")
 	}
 
+	binlog.Ip = []byte("fakebinlog")
+
 	payload, err := binlog.Marshal()
 	if err != nil {
 		return nil, errors.Annotate(err, "gennerate fake binlog err")
