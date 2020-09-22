@@ -71,6 +71,8 @@ type Config struct {
 
 	GenFakeBinlogInterval int `toml:"gen-binlog-interval" json:"gen-binlog-interval"`
 
+	BinlogSupportIp bool `toml:"binlog-support-ip" json:"binlog-support-ip"`
+
 	MetricsAddr     string
 	MetricsInterval int
 	configFile      string
@@ -115,6 +117,9 @@ func NewConfig() *Config {
 	fs.BoolVar(new(bool), "enable-binlog-slice", false, "DEPRECATED")
 	fs.IntVar(new(int), "binlog-slice-size", 0, "DEPRECATED")
 	fs.StringVar(new(string), "log-rotate", "", "DEPRECATED")
+
+	fs.BoolVar(&cfg.BinlogSupportIp, "binlog-support-ip", true, "binlog support ip")
+
 
 	return cfg
 }
