@@ -73,6 +73,10 @@ func NewSyncer(cp checkpoint.CheckPoint, cfg *SyncerConfig, jobs []*model.Job) (
 	syncer.shutdown = make(chan struct{})
 	syncer.closed = make(chan struct{})
 
+	if len(cfg.MigrationIPs) == 0 {
+		log.Fatal("migration-ips is null")
+	}
+
 	var ignoreDBs []string
 	if len(cfg.IgnoreSchemas) > 0 {
 		ignoreDBs = strings.Split(cfg.IgnoreSchemas, ",")
