@@ -313,7 +313,7 @@ func (s *Server) PullBinlogs(in *binlog.PullBinlogReq, stream binlog.Pump_PullBi
 				log.Fatal("PullBinlogs::" + err.Error())
 			} else {
 				if len(blog.Ip) == 0 {
-					log.Fatal("PullBinlogs:: binlog ip is nil")
+					log.Fatal("PullBinlogs:: binlog ip is nil", zap.String("binlog", fmt.Sprintf("%v", blog)))
 				}
 			}
 
