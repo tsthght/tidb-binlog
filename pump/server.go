@@ -239,6 +239,10 @@ func (s *Server) writeBinlog(ctx context.Context, in *binlog.WriteBinlogReq, isF
 		}
 	}
 
+	if len(blog.Ip) == 0 {
+		log.Fatal("writeBinlog:: binlog ip is nil")
+	}
+
 	err = s.storage.WriteBinlog(blog)
 	if err != nil {
 		goto errHandle
@@ -302,6 +306,16 @@ func (s *Server) PullBinlogs(in *binlog.PullBinlogReq, stream binlog.Pump_PullBi
 				return nil
 			}
 			resp := new(binlog.PullBinlogResp)
+
+			blog := new(binlog.Binlog)
+			err = blog.Unmarshal(data)
+			if err != nil {
+				log.Fatal("PullBinlogs::" + err.Error())
+			} else {
+				if len(blog.Ip) == 0 {
+					log.Fatal("PullBinlogs:: binlog ip is nil")
+				}
+			}
 
 			resp.Entity.Payload = data
 			err = stream.Send(resp)
