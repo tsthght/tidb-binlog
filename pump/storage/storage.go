@@ -1088,7 +1088,7 @@ func (a *Append) feedPreWriteValue(cbinlog *pb.Binlog) error {
 	cbinlog.DdlQuery = pbinlog.DdlQuery
 	cbinlog.DdlJobId = pbinlog.DdlJobId
 	cbinlog.DdlSchemaState = pbinlog.DdlSchemaState
-	cbinlog.Ip = pbinlog.Ip
+	cbinlog.Ip = []byte(pbinlog.Ip)
 
 	return nil
 }
