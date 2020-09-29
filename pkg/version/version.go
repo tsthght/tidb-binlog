@@ -33,7 +33,7 @@ var (
 // GetRawVersionInfo do what its name tells
 func GetRawVersionInfo() string {
 	var info string
-	info += fmt.Sprintf("Release Version: %s\n", ReleaseVersion)
+	info += fmt.Sprintf("Release Version MT: %s\n", ReleaseVersion)
 	info += fmt.Sprintf("Git Commit Hash: %s\n", GitHash)
 	info += fmt.Sprintf("Build TS: %s\n", BuildTS)
 	info += fmt.Sprintf("Go Version: %s\n", runtime.Version())
@@ -48,7 +48,7 @@ func PrintVersionInfo(app string) {
 	defer log.SetLevel(oldLevel)
 
 	log.Info("Welcome to "+app,
-		zap.String("Release Version", ReleaseVersion),
+		zap.String("Release Version MT", ReleaseVersion),
 		zap.String("Git Commit Hash", GitHash),
 		zap.String("Build TS", BuildTS),
 		zap.String("Go Version", runtime.Version()),
