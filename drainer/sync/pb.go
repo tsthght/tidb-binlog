@@ -14,11 +14,15 @@
 package sync
 
 import (
+	"fmt"
+
 	"github.com/pingcap/errors"
+	"github.com/pingcap/log"
 	"github.com/pingcap/tidb-binlog/drainer/translator"
 	"github.com/pingcap/tidb-binlog/pkg/binlogfile"
 	pb "github.com/pingcap/tidb-binlog/proto/binlog"
 	tb "github.com/pingcap/tipb/go-binlog"
+	"go.uber.org/zap"
 )
 
 var _ Syncer = &pbSyncer{}
@@ -49,7 +53,9 @@ func (p *pbSyncer) Sync(item *Item) error {
 	if err != nil {
 		return errors.Trace(err)
 	}
-
+	log.Info("#### Start", zap.String("ip", string(item.Binlog.Ip)))
+	log.Info("####", zap.String("binlog", fmt.Sprintf("%v", pbBinlog)))
+	log.Info("#### End")
 	err = p.saveBinlog(pbBinlog)
 	if err != nil {
 		return errors.Trace(err)

@@ -25,6 +25,7 @@ import (
 	"github.com/pingcap/tidb-binlog/drainer/translator"
 	"github.com/pingcap/tidb-binlog/pkg/loader"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.uber.org/zap"
 )
 
 var _ Syncer = &MysqlSyncer{}
@@ -157,6 +158,7 @@ func (m *MysqlSyncer) SetSafeMode(mode bool) {
 
 // Sync implements Syncer interface
 func (m *MysqlSyncer) Sync(item *Item) error {
+	log.Info("####", zap.String("ip", string(item.Binlog.Ip)))
 	// `relayer` is nil if relay log is disabled.
 	if m.relayer != nil {
 		pos, err := m.relayer.WriteBinlog(item.Schema, item.Table, item.Binlog, item.PrewriteValue)
